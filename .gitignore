@@ -9,7 +9,7 @@ npm-debug.log
 .npm
 
 # Environment variables
-.env
+# .env
 
 # Editor files
 .vscode/
