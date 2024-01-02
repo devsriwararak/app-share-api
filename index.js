@@ -18,25 +18,6 @@ import memberRouter from "./Routes/Member.js";
 const app = express();
 const port = process.env.PORT || 3000;
 
-// const pool = mysql.createPool({
-//   host: "147.50.231.19",
-//   user: "devsriwa_app_share-2",
-//   password: "*Nattawut1234",
-//   database: "devsriwa_app_share-2",
-//   waitForConnections: true,
-//   connectionLimit: 10,
-//   queueLimit: 0,
-// });
-
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-});
 
 app.use(cors());
 
@@ -59,31 +40,6 @@ app.get("/", (req, res) => {
   res.send("Hello World! ss");
 });
 
-app.get("/users", async (req, res) => {
-  try {
-    const sql = " SELECT * FROM users";
-    const [result] = await pool.query(sql);
-    res.status(200).json(result);
-  } catch (error) {
-    console.log(error);
-  }
-});
-
-app.get("/register", async (req, res) => {
-  const plainTextPassword = "1234";
-  const saltRounds = 10;
-  const newPassword = await bcrypt.hash(plainTextPassword, saltRounds);
-  console.log(newPassword);
-  res.json(newPassword);
-});
-
-app.get("/login", async (req, res) => {
-  const password = await bcrypt.compare(
-    "1234",
-    "$2b$10$2mtWU63K.mYG9QP3jugdlO.BFD5rP3FU4EyfnFcpgQYz.v2qQ7sPy"
-  );
-  res.json(password);
-});
 
 // Router
 app.use("/users", usersRoutes);
