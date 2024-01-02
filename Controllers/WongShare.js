@@ -271,7 +271,9 @@ export const putWongShareById = async (req, res) => {
       pay_for_wong,
       interest,
       note,
-      id
+      id,
+      online,
+      takecare,
     } = req.body;
 
     // Check
@@ -280,7 +282,7 @@ export const putWongShareById = async (req, res) => {
 
     if (resultCheck.length > 0) {
       const sql =
-        "UPDATE wong_share SET  type_wong_id = ?, interest = ? , installment = ? , price = ? , pay_for_wong = ? , count = ? , note = ?  WHERE id = ?";
+        "UPDATE wong_share SET  type_wong_id = ?, interest = ? , installment = ? , price = ? , pay_for_wong = ? , count = ? , note = ?, online = ?, takecare = ?  WHERE id = ?";
       const result = pool.query(sql, [
         type_wong_id || "",
         interest || "",
@@ -289,12 +291,15 @@ export const putWongShareById = async (req, res) => {
         pay_for_wong || "",
         count || "",
         note || "",
+        online || 0,
+        takecare || 0 ,
         id,
+   
       ]);
-      res.status(200).json({ message: "ทำรายการสำเร็จ" });
+      res.status(200).json({ message: "ทำรายการสำเร็จ 1" });
     } else {
       const sql =
-        "UPDATE wong_share SET name = ? , type_wong_id = ?, interest = ? , installment = ? , price = ? , pay_for_wong = ? , count = ? , note = ?  WHERE id = ?";
+        "UPDATE wong_share SET name = ? , type_wong_id = ?, interest = ? , installment = ? , price = ? , pay_for_wong = ? , count = ? , note = ?, online = ?, takecare = ?  WHERE id = ?";
       const result = pool.query(sql, [
         name || "",
         type_wong_id || "",
@@ -304,9 +309,12 @@ export const putWongShareById = async (req, res) => {
         pay_for_wong || "",
         count || "",
         note || "",
+        online || 0 ,
+        takecare || 0 ,
         id,
+   
       ]);
-      res.status(200).json({ message: "ทำรายการสำเร็จ" });
+      res.status(200).json({ message: "ทำรายการสำเร็จ 2" });
     }
   } catch (error) {
     console.log(error);

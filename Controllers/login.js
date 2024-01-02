@@ -33,6 +33,7 @@ export const postLogin = async (req, res) => {
       const token = jwt.sign(
         {
           username,
+          id : userData.id,
           role: userData.role,
           name: `${userData.fname} ${userData.lname}`,
           home_share_name: userData.home_share_name || "",
