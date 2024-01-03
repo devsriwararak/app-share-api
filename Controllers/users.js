@@ -163,3 +163,27 @@ export const getUserMyHomeShare = async(req,res)=>{
     res.status(200).json({message:'ทำรายการไม่สำเร็จ'})
   }
 }
+
+export const getUserMyWongShareByIDHome = async(req,res)=>{
+  try {
+    const {user_id , home_share_id} = req.params
+
+    if(user_id && home_share_id ) {
+      const sql = `SELECT user_to_wong_share.* ,  wong_share.* , home_share.name AS home_share_name , type_wong.name AS type_wong_name
+      FROM user_to_wong_share 
+      JOIN wong_share ON user_to_wong_share.wong_share_id = wong_share.id
+      JOIN home_share ON user_to_wong_share.home_share_id = home_share.id
+      JOIN type_wong ON wong_share.type_wong_id = type_wong.id
+      WHERE user_to_wong_share.user_id = ? AND user_to_wong_share.home_share_id = ? `
+      const [result] = await pool.query(sql, [user_id, home_share_id])
+
+      
+      res.status(200).json(result)
+    }
+
+
+  } catch (error) {
+    console.log(error);
+    res.status(200).json({message: 'ทำรายการไม่สำเร็จ'})
+  }
+}
