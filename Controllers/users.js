@@ -1,3 +1,4 @@
+import { CheckPasswordUser } from "../Components/CheckPasswordUser.js";
 import { checkPassword } from "../Components/checkPassword.js";
 import pool from "../db/mysqlConfig.js";
 import bcrypt from "bcrypt";
@@ -21,6 +22,8 @@ export const getUsers = async (req, res) => {
   }
 };
 
+
+
 export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -35,34 +38,32 @@ export const deleteUser = async (req, res) => {
 
 export const putuser = async (req, res) => {
   try {
-    const { id, username, password, fname, lname, address, tell } = req.body;
+    const { id, password, fname, lname, address, tell } = req.body;
 
 
-    const newPassword = await checkPassword(username, password)
+    const newPassword = await CheckPasswordUser(tell, password)
 
 
 
     // Check user ซ้ำ
-    const sqlCheck = "SELECT * FROM users WHERE username = ?";
-    const [resultCheck] = await pool.query(sqlCheck, username);
+    const sqlCheck = "SELECT * FROM users WHERE tell = ?";
+    const [resultCheck] = await pool.query(sqlCheck, tell);
 
     if (resultCheck.length > 0) {
       const sql =
-      "UPDATE users SET  password = ?, fname = ?, lname = ?, address = ?, tell = ? WHERE id = ?";
+      "UPDATE users SET  password = ?, fname = ?, lname = ?, address = ? WHERE id = ?";
     await pool.query(sql, [
       newPassword,
       fname,
       lname,
       address,
-      tell,
       id,
     ]);
     res.status(200).json({message: 'ทำรายการสำเร็จ'})
     } else {
       const sql =
-        "UPDATE users SET username = ?, password = ?, fname = ?, lname = ?, address = ?, tell = ? WHERE id = ?";
+        "UPDATE users SET  password = ?, fname = ?, lname = ?, address = ?, tell = ? WHERE id = ?";
       await pool.query(sql, [
-        username,
         newPassword,
         fname,
         lname,

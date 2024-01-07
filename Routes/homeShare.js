@@ -1,5 +1,5 @@
 import express from 'express';
-import { deleteHomeShare, getHomeShare, getHomeShareById, getUsersInMYHomeShare, postHomeShare, postUserToMyHome, putHomeShare, updateStatusUserInMyHome } from '../Controllers/homeShare.js';
+import { deleteHomeShare, getAllUsersForMyHome, getHomeShare, getHomeShareById, getUsersInMYHomeShare, postHomeShare, postUserToMyHome, putHomeShare, updateStatusUserInMyHome } from '../Controllers/homeShare.js';
 import { authenticationToken } from '../Middleware/auth.js';
 const router = express.Router();
 
@@ -11,6 +11,8 @@ router.put('/', authenticationToken , putHomeShare)
 
 
 // Users
+router.get('/users/all', authenticationToken, getAllUsersForMyHome)
+
 router.get('/users/:home_share_id', authenticationToken , getUsersInMYHomeShare)
 router.put('/users', authenticationToken , updateStatusUserInMyHome)
 router.post('/users' , authenticationToken ,postUserToMyHome)

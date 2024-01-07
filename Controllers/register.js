@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 export const postRegister = async (req, res) => {
   const { username, password, fname, lname, tell, address } = req.body;
   try {
+    console.log(req.body);
     const passwordHasg = await bcrypt.hash(password, 10);
 
     // ADD H0001 + 1
@@ -19,17 +20,17 @@ export const postRegister = async (req, res) => {
 
     // check user ซ้ำ
 
-    const checkUsername = "SELECT * FROM users WHERE username = ?";
-    const resultCheck = await pool.query(checkUsername, [username]);
+    const checkUsername = "SELECT * FROM users WHERE tell = ?";
+    const resultCheck = await pool.query(checkUsername, [tell]);
     // console.log(resultCheck[0]);
     if (resultCheck[0].length) {
       res.status(400).json({ message: "มีผู้ใช้งานนี้แล้ว กรุณาสมัครใหม่" });
     } else {
       // สมัครได้
       const sql =
-        "INSERT INTO users (username, password, fname, lname, tell, address, role, code) VALUES (?,?,?,?,?,?,?,?)";
+        "INSERT INTO users (username ,password, fname, lname, tell, address, role, code) VALUES (?,?,?,?,?,?,?,?)";
       const result = await pool.query(sql, [
-        username || "",
+        username ,
         passwordHasg || "",
         fname || "",
         lname || "",
