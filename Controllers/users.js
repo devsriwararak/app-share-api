@@ -137,26 +137,40 @@ export const getUserForMyWongShare = async(req,res)=>{
 
 export const getUserMyHomeShare = async(req,res)=>{
   try {
-    const {user_id} = req.params
+    const {tell} = req.params
     const {search} = req.query
 
-    console.log(search);
+    console.log(5555555555555555555555555);
 
     if(search){
-      const sql = `SELECT user_to_wong_share.* , home_share.name AS home_share_name 
-      FROM user_to_wong_share 
-      JOIN home_share ON user_to_wong_share.home_share_id = home_share.id
-      WHERE  user_to_wong_share.user_id = ? AND home_share.name LIKE '%${search}%'  GROUP BY home_share.name `
-      const [result] = await pool.query(sql, user_id)
-      res.status(200).json(result)
+
     }else {
-      const sql = `SELECT user_to_wong_share.* , home_share.name AS home_share_name 
-      FROM user_to_wong_share 
-      JOIN home_share ON user_to_wong_share.home_share_id = home_share.id
-      WHERE  user_to_wong_share.user_id = ? GROUP BY home_share.name `
-      const [result] = await pool.query(sql, user_id)
+      const sql = `SELECT home_share_users.* , home_share.name AS home_share_name , home_share.code AS home_share_code 
+      FROM home_share_users 
+      JOIN home_share ON home_share_users.home_share_id = home_share.id
+      WHERE home_share_users.tell = ?
+      `;
+      const [result] = await pool.query(sql, [tell])
+      console.log(result);
+
       res.status(200).json(result)
     }
+
+    // if(search){
+    //   const sql = `SELECT user_to_wong_share.* , home_share.name AS home_share_name 
+    //   FROM user_to_wong_share 
+    //   JOIN home_share ON user_to_wong_share.home_share_id = home_share.id
+    //   WHERE  user_to_wong_share.user_id = ? AND home_share.name LIKE '%${search}%'  GROUP BY home_share.name `
+    //   const [result] = await pool.query(sql, user_id)
+    //   res.status(200).json(result)
+    // }else {
+    //   const sql = `SELECT user_to_wong_share.* , home_share.name AS home_share_name 
+    //   FROM user_to_wong_share 
+    //   JOIN home_share ON user_to_wong_share.home_share_id = home_share.id
+    //   WHERE  user_to_wong_share.user_id = ? GROUP BY home_share.name `
+    //   const [result] = await pool.query(sql, user_id)
+    //   res.status(200).json(result)
+    // }
 
 
   } catch (error) {

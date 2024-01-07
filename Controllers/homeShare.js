@@ -164,11 +164,19 @@ export const getUsersInMYHomeShare = async (req, res) => {
     const { home_share_id } = req.params;
     const { search } = req.query;
 
+    console.log(search);
+
     if (search) {
+
+      if (home_share_id) {
+        const sql = `SELECT id, fname, lname,  tell, address FROM home_share_users WHERE home_share_id = ? AND fname LIKE ? `;
+        const [result] = await pool.query(sql, [home_share_id, `%${search}%`]);
+        res.status(200).json(result);
+      }
     } else {
       if (home_share_id) {
-        const sql = `SELECT id, fname, lname, code, tell, address FROM users WHERE home_share_id = ? AND role = ?`;
-        const [result] = await pool.query(sql, [home_share_id, 2]);
+        const sql = `SELECT id, fname, lname,  tell, address FROM home_share_users WHERE home_share_id = ? `;
+        const [result] = await pool.query(sql, [home_share_id]);
         res.status(200).json(result);
       }
     }
@@ -206,78 +214,34 @@ export const getUsersInMYHomeShare = async (req, res) => {
 
 export const updateStatusUserInMyHome = async (req, res) => {
   try {
-    const { id, status } = req.body;
 
-    if (id && status) {
-      if (status == 2) {
-        // ลบ
-        const sql = `DELETE FROM user_to_wong_share  WHERE id = ? `;
-        await pool.query(sql, id);
-        res.status(200).json({ message: "ทำรายการสำเร็จ" });
-      } else {
-        // เพิ่ม
-        const sql = `UPDATE user_to_wong_share SET status = ? WHERE id = ? `;
-        await pool.query(sql, [status, id]);
-        res.status(200).json({ message: "ทำรายการสำเร็จ" });
-      }
+
+    const { id, home_share_id, fname, lname, address, tell   } = req.body;
+
+
+    const sqlCheck = `SELECT * FROM home_share_users WHERE home_share_id = ? AND tell = ?`
+    const [resultCheck] = await pool.query(sqlCheck, [home_share_id, tell])
+
+    if(resultCheck.length > 0){
+      const sql = `UPDATE home_share_users SET fname = ? , lname = ?  , address = ? WHERE id = ?  `
+      await pool.query(sql, [ fname, lname,  address, id ])
+      res.status(200).json({message:'ทำรายการสำเร็จ'})
+    }else {
+     const sql = `UPDATE home_share_users SET fname = ? , lname = ? , tell = ? , address = ? WHERE id = ? `
+     await pool.query(sql, [ fname, lname, tell , address, id ])
+     res.status(200).json({message:'ทำรายการสำเร็จ'})
     }
+
+
   } catch (error) {
     console.log(error);
     res.status(400).json({ message: "ทำรายการไม่สำเร็จ" });
   }
 };
 
-// export const postUserToMyHome = async (req, res) => {
-//   try {
-//     const { home_share_id, username, password, fname, lname, tell, address } =
-//       req.body;
-
-//     const passwordHasg = await bcrypt.hash(password, 10);
-
-//     // ADD H0001 + 1
-//     const sqlCheckLastID =
-//       "SELECT code FROM `users` WHERE role = ? ORDER BY id DESC LIMIT 1";
-//     const [resultCheckLastId] = await pool.query(sqlCheckLastID, 2);
-//     const originalString = resultCheckLastId[0].code;
-//     let numberOfIncrements = 1;
-
-//     const newData = getNumberCode(originalString, numberOfIncrements, "U");
-//     const newCodeNumber = newData.toString();
-
-//     // check user ซ้ำ
-
-//     const checkUsername = "SELECT * FROM users WHERE username = ?";
-//     const resultCheck = await pool.query(checkUsername, [username]);
-//     // console.log(resultCheck[0]);
-//     if (resultCheck[0].length) {
-//       res.status(400).json({ message: "มีผู้ใช้งานนี้แล้ว กรุณาสมัครใหม่" });
-//     } else {
-//       // สมัครได้
-//       const sql =
-//         "INSERT INTO users (username, password, fname, lname, tell, address, role, code, home_share_id) VALUES (?,?,?,?,?,?,?,?,?)";
-//       const result = await pool.query(sql, [
-//         username || "",
-//         passwordHasg || "",
-//         fname || "",
-//         lname || "",
-//         tell || "",
-//         address || "",
-//         2 || "",
-//         newCodeNumber || "",
-//         home_share_id || ""
-//       ]);
-//       // console.log(result[0]);
-//       res.status(200).json({ message: "บันทึกสำเร็จ" });
-//     }
-//   } catch (error) {
-//     console.log(error);
-//     res.status(400).json({ message: "ทำรายการไม่สำเร็จ" });
-//   }
-// };
 
 export const postUserToMyHome = async (req, res) => {
   try {
-    // { fname: '111', lname: '222', address: '4444', tell: '3333' }
     const { home_share_id, fname, lname, address, tell } = req.body;
 
     const sqlCheck = `SELECT * FROM home_share_users WHERE home_share_id = ? AND tell = ? `;
