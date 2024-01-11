@@ -26,7 +26,8 @@ app.use(
     origin: [
       "http://localhost:5173",
       "https://app-share-api.vercel.app", 
-      "https://app-share-2.netlify.app"
+      "https://app-share-2.netlify.app",
+      "https://app-share.devsriwararak.com"
     ],
     methods: ["POST", "GET" , "DELETE", "PUT"],
 
@@ -38,6 +39,16 @@ app.use(express.json());
 
 app.get("/", (req, res) => {
   res.send("Hello World! v-2");
+  const data = {
+
+  }
+
+  const imageUrl = 'https://img.freepik.com/free-vector/hand-drawn-business-planning_52683-76248.jpg?w=740&t=st=1704698087~exp=1704698687~hmac=faea7a366c6270bc973731b69bcea3a556a7e5e3ab2590ed65123b1b3149fbd0';
+
+  console.log('Image URL:', imageUrl);
+
+  console.log('Happy Birthday Day 27 ปี');
+  console.log(data);
 });
 
 
