@@ -3,9 +3,9 @@ import pool from "../db/mysqlConfig.js";
 import bcrypt from "bcrypt";
 
 export const postRegister = async (req, res) => {
-  const { username, password, fname, lname, tell, address } = req.body;
+  const { username, password, tell } = req.body;
   try {
-    console.log(req.body);
+    // console.log(req.body);
     const passwordHasg = await bcrypt.hash(password, 10);
 
     // ADD H0001 + 1
@@ -27,20 +27,27 @@ export const postRegister = async (req, res) => {
       res.status(400).json({ message: "มีผู้ใช้งานนี้แล้ว กรุณาสมัครใหม่" });
     } else {
       // สมัครได้
-      const sql =
-        "INSERT INTO users (username ,password, fname, lname, tell, address, role, code) VALUES (?,?,?,?,?,?,?,?)";
-      const result = await pool.query(sql, [
-        username ,
-        passwordHasg || "",
-        fname || "",
-        lname || "",
-        tell || "",
-        address || "",
-        2 || "",
-        newCodeNumber || ""
-      ]);
-      // console.log(result[0]);
-      res.status(200).json({ message: "บันทึกสำเร็จ" });
+      const sqlDrumpData =
+        "SELECT fname, lname, tell, address from home_share_users WHERE tell = ?";
+      const [resultDrumpData] = await pool.query(sqlDrumpData, [tell]);
+      // console.log(resultDrumpData[0]);
+
+      if (resultDrumpData[0]) {
+        const sql =
+          "INSERT INTO users (username ,password, tell, role, code, fname, lname, address) VALUES (?,?,?,?,?,?,?,?)";
+        const result = await pool.query(sql, [
+          username,
+          passwordHasg || "",
+          tell || "",
+          2 || "",
+          newCodeNumber || "",
+          resultDrumpData[0].fname,
+          resultDrumpData[0].lname,
+          resultDrumpData[0].address
+        ]);
+        // console.log(result[0]);
+        res.status(200).json({ message: "บันทึกสำเร็จ" });
+      }
     }
   } catch (error) {
     console.log(error);
