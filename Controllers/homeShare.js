@@ -211,11 +211,11 @@ export const updateStatusUserInMyHome = async (req, res) => {
     const [resultCheck] = await pool.query(sqlCheck, [home_share_id, tell]);
 
     if (resultCheck.length > 0) {
-      const sql = `UPDATE home_share_users SET fname = ? , lname = ?  , address = ? WHERE id = ?  `;
+      const sql = `UPDATE home_share_users SET fname =? , lname =?  , address =? WHERE id =?  `;
       await pool.query(sql, [fname, lname, address, id]);
       // Update To Table USERS
       await pool.query(
-        `UPDATE users SET fname = ? , lname = ?  , address = ? WHERE tell= ?`,
+        `UPDATE users SET fname =? , lname =?  , address =? WHERE tell =?`,
         [fname, lname, address, tell]
       );
       res.status(200).json({ message: "ทำรายการสำเร็จ" });
@@ -224,7 +224,7 @@ export const updateStatusUserInMyHome = async (req, res) => {
       await pool.query(sql, [fname, lname, tell, address, id]);
       // Update To Table USERS
       await pool.query(
-        `UPDATE users SET fname = ? , lname = ?  , tell = ? ,address = ? WHERE tell= ?`,
+        `UPDATE users SET fname =? , lname =?  , tell =? ,address =? WHERE tell =?`,
         [fname, lname, tell, address, tell]
       );
       res.status(200).json({ message: "ทำรายการสำเร็จ" });
