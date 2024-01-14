@@ -9,11 +9,11 @@ export const getHomeShare = async (req, res) => {
     let sql = null;
 
     if (search) {
-      sql = `SELECT * FROM home_share WHERE name LIKE '%${search}%' OR code LIKE '%${search}%' ORDER BY code DESC `;
+      sql = `SELECT * FROM home_share WHERE name LIKE '%${search}%' OR code LIKE '%${search}%' ORDER BY code DESC LIMIT 0,5 `;
     } else if (status_own) {
-      sql = "SELECT * FROM home_share WHERE status_own = 0  ORDER BY code DESC";
+      sql = "SELECT * FROM home_share WHERE status_own = 0  ORDER BY code DESC LIMIT 0,5";
     } else {
-      sql = "SELECT * FROM home_share ORDER BY code DESC";
+      sql = "SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share ORDER BY code DESC LIMIT 0,5";
     }
 
     const result = await pool.query(sql);
@@ -44,7 +44,7 @@ export const postHomeShare = async (req, res) => {
   try {
     const { name, bank, account_number, account_name, line } = req.body;
     // เช็คค่าซ้ำ
-    const checkSql = "SELECT * FROM `home_share` WHERE name = ?";
+    const checkSql = "SELECT name FROM `home_share` WHERE name = ?";
     const resultCheck = await pool.query(checkSql, name);
 
     // ADD H0001 + 1
@@ -96,7 +96,7 @@ export const putHomeShare = async (req, res) => {
   try {
     const { id, name, bank, account_number, account_name, line } = req.body;
 
-    const checkSql = "SELECT * FROM `home_share` WHERE name = ?";
+    const checkSql = "SELECT name FROM `home_share` WHERE name = ?";
     const resultCheck = await pool.query(checkSql, name);
 
     if (resultCheck[0].length) {

@@ -20,7 +20,7 @@ export const postRegister = async (req, res) => {
 
     // check user ซ้ำ
 
-    const checkUsername = "SELECT * FROM users WHERE tell = ?";
+    const checkUsername = "SELECT tell FROM users WHERE tell = ?";
     const resultCheck = await pool.query(checkUsername, [tell]);
     // console.log(resultCheck[0]);
     if (resultCheck[0].length) {

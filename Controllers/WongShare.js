@@ -49,7 +49,7 @@ export const postWongShare = async (req, res) => {
     const newCodeNumber = newData.toString();
 
     // check ในบ้านแชร์ ห้ามมีวงแชร์ ซ้ำ
-    const sqlCheck = "SELECT * FROM wong_share WHERE home_share_id = ?  ";
+    const sqlCheck = "SELECT name, home_share_id FROM wong_share WHERE home_share_id = ?  ";
     const [resultCheck] = await pool.query(sqlCheck, home_share_id);
 
     const nameExistsInRows = resultCheck.map((row) => row.name === name);
@@ -57,7 +57,7 @@ export const postWongShare = async (req, res) => {
     if (nameExistsInRows.includes(true)) {
       res
         .status(400)
-        .json({ message: "ชื่อวงแชร์นี้ มีแล้วในบ้านี้ กรุณาเพิ่มใหม่" });
+        .json({ message: "ชื่อวงแชร์นี้ มีข้อมูลในบ้านนี้แล้ว กรุณาเพิ่มใหม่" });
     } else {
       const sql =
         "INSERT INTO wong_share (code, home_share_id, type_wong_id, name, interest, installment, price, pay_for_wong, count, note) VALUES (?,?,?,?,?,?,?,?,?,?) ";
@@ -111,7 +111,7 @@ export const putWongShare = async (req, res) => {
 
   try {
     // check ในบ้านแชร์ ห้ามมีวงแชร์ ซ้ำ
-    const sqlCheck = "SELECT * FROM wong_share WHERE home_share_id = ?  ";
+    const sqlCheck = "SELECT name , home_share_id  FROM wong_share WHERE home_share_id = ?  ";
     const [resultCheck] = await pool.query(sqlCheck, home_share_id);
 
     const test_2 = resultCheck.find((obj) => obj.name === name);
@@ -122,11 +122,11 @@ export const putWongShare = async (req, res) => {
       const result = pool.query(sql, [
         home_share_id || "",
         type_wong_id || "",
-        interest || "",
-        installment || "",
-        price || "",
-        pay_for_wong || "",
-        count || "",
+        interest || 0,
+        installment || 0,
+        price || 0,
+        pay_for_wong || 0,
+        count || 0,
         note || "",
         id,
       ]);
@@ -138,11 +138,11 @@ export const putWongShare = async (req, res) => {
         home_share_id || "",
         type_wong_id || "",
         name || "",
-        interest || "",
-        installment || "",
-        price || "",
-        pay_for_wong || "",
-        count || "",
+        interest || 0,
+        installment || 0,
+        price || 0,
+        pay_for_wong || 0,
+        count || 0,
         note || "",
         id,
       ]);
@@ -322,5 +322,5 @@ export const putWongShareById = async (req, res) => {
   }
 };
 
-// users
+
 
