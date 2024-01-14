@@ -1,25 +1,39 @@
+import perPages from "../Components/PerPages.js";
 import { getNumberCode } from "../Components/getNumberCode.js";
 import pool from "../db/mysqlConfig.js";
 import bcrypt from "bcrypt";
 
 export const getHomeShare = async (req, res) => {
   try {
-    const { search, status_own } = req.query;
+    const { search, status_own, page, limit } = req.query;
+    const perPage = 3;
+    const offset = (page - 1) * perPage;
+    // const offset = (page - 1) * limit;
     let data = null;
     let sql = null;
+    let countQuery = null;
 
     if (search) {
       sql = `SELECT * FROM home_share WHERE name LIKE '%${search}%' OR code LIKE '%${search}%' ORDER BY code DESC LIMIT 0,5 `;
     } else if (status_own) {
-      sql = "SELECT * FROM home_share WHERE status_own = 0  ORDER BY code DESC LIMIT 0,5";
+      sql =
+        "SELECT * FROM home_share WHERE status_own = 0  ORDER BY code DESC LIMIT 0,5";
     } else {
-      sql = "SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share ORDER BY code DESC LIMIT 0,5";
+      countQuery = "SELECT COUNT(id) AS totalCount FROM home_share";
+      sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share ORDER BY code ASC LIMIT ${perPage} OFFSET ${offset}`;
     }
 
+    // PerPages Count
+    const totalPages = await perPages(countQuery);
+
+    // Finish Process
     const result = await pool.query(sql);
     data = result[0];
 
-    res.status(200).json(data);
+    res.status(200).json({
+      result: data,
+      totalPages,
+    });
   } catch (error) {
     console.log(error);
     res.status(400).json({ message: "เกิดข้อผิดพลาด" });
@@ -52,7 +66,7 @@ export const postHomeShare = async (req, res) => {
       "SELECT code FROM `home_share` ORDER BY id DESC LIMIT 1";
     const [resultCheckLastId] = await pool.query(sqlCheckLastID);
     const originalString = resultCheckLastId[0].code;
-    console.log(originalString);
+    // console.log(originalString);
     let numberOfIncrements = 1;
 
     const newData = getNumberCode(originalString, numberOfIncrements, "H");
