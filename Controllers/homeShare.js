@@ -154,11 +154,11 @@ export const getAllUsersForMyHome = async (req, res) => {
     const { search } = req.query;
     console.log(search);
     if (search) {
-      const sql = `SELECT * FROM home_share_users WHERE fname LIKE '%${search}%' `;
+      const sql = `SELECT id, tell, fname, lname, address FROM home_share_users WHERE fname LIKE '%${search}%' LIMIT 0,9 `;
       const [result] = await pool.query(sql);
       res.status(200).json(result);
     } else {
-      const sql = `SELECT * FROM home_share_users`;
+      const sql = `SELECT id, tell, fname, lname, address FROM home_share_users LIMIT 0,9`;
       const [result] = await pool.query(sql);
       res.status(200).json(result);
     }
@@ -224,7 +224,7 @@ export const updateStatusUserInMyHome = async (req, res) => {
   try {
     const { id, home_share_id, fname, lname, address, tell } = req.body;
 
-    const sqlCheck = `SELECT * FROM home_share_users WHERE home_share_id = ? AND tell = ?`;
+    const sqlCheck = `SELECT home_share_id, tell FROM home_share_users WHERE home_share_id = ? AND tell = ?`;
     const [resultCheck] = await pool.query(sqlCheck, [home_share_id, tell]);
 
     if (resultCheck.length > 0) {
@@ -256,7 +256,7 @@ export const postUserToMyHome = async (req, res) => {
   try {
     const { home_share_id, fname, lname, address, tell } = req.body;
 
-    const sqlCheck = `SELECT * FROM home_share_users WHERE home_share_id = ? AND tell = ? `;
+    const sqlCheck = `SELECT home_share_id, tell FROM home_share_users WHERE home_share_id = ? AND tell = ? `;
     const [resultCheck] = await pool.query(sqlCheck, [home_share_id, tell]);
     if (resultCheck.length > 0) {
       res

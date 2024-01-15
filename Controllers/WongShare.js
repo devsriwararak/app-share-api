@@ -186,19 +186,20 @@ export const getWongShareById = async (req, res) => {
   try {
     const { home_share_id } = req.params;
     const { search } = req.query;
+    
 
     if (search) {
       const sql = `SELECT wong_share.* , type_wong.name AS type_wong_name
       FROM wong_share 
       JOIN type_wong ON wong_share.type_wong_id = type_wong.id
-      WHERE home_share_id = ? AND wong_share.name LIKE '%${search}%' `;
+      WHERE wong_share.home_share_id = ? AND wong_share.name LIKE '%${search}%' LIMIT 0, 9 `;
       const [result] = await pool.query(sql, home_share_id);
       res.status(200).json(result);
     } else {
       const sql = `SELECT wong_share.* , type_wong.name AS type_wong_name
     FROM wong_share 
     JOIN type_wong ON wong_share.type_wong_id = type_wong.id
-    WHERE home_share_id = ?`;
+    WHERE wong_share.home_share_id = ? LIMIT 0, 9`;
       const [result] = await pool.query(sql, home_share_id);
       res.status(200).json(result);
     }
@@ -233,7 +234,7 @@ export const postWongShareById = async (req, res) => {
     const newCodeNumber = newData.toString();
 
     // Check
-    const sqlCheck = `SELECT * FROM wong_share WHERE home_share_id = ? AND name = ?  `;
+    const sqlCheck = `SELECT home_share_id, name FROM wong_share WHERE home_share_id = ? AND name = ?  `;
     const [resultCheck] = await pool.query(sqlCheck, [home_share_id, name]);
 
     if (resultCheck.length > 0) {
@@ -278,7 +279,7 @@ export const putWongShareById = async (req, res) => {
     } = req.body;
 
     // Check
-    const sqlCheck = `SELECT * FROM wong_share WHERE home_share_id = ? AND name = ?  `;
+    const sqlCheck = `SELECT home_share_id, name FROM wong_share WHERE home_share_id = ? AND name = ?  `;
     const [resultCheck] = await pool.query(sqlCheck, [home_share_id, name]);
 
     if (resultCheck.length > 0) {
@@ -286,11 +287,11 @@ export const putWongShareById = async (req, res) => {
         "UPDATE wong_share SET  type_wong_id = ?, interest = ? , installment = ? , price = ? , pay_for_wong = ? , count = ? , note = ?, online = ?, takecare = ?  WHERE id = ?";
       const result = pool.query(sql, [
         type_wong_id || "",
-        interest || "",
-        installment || "",
-        price || "",
-        pay_for_wong || "",
-        count || "",
+        interest || 0,
+        installment || 0,
+        price || 0,
+        pay_for_wong || 0,
+        count || 0,
         note || "",
         online || 0,
         takecare || 0 ,
@@ -304,11 +305,11 @@ export const putWongShareById = async (req, res) => {
       const result = pool.query(sql, [
         name || "",
         type_wong_id || "",
-        interest || "",
-        installment || "",
-        price || "",
-        pay_for_wong || "",
-        count || "",
+        interest || 0,
+        installment || 0,
+        price || 0,
+        pay_for_wong || 0,
+        count || 0,
         note || "",
         online || 0 ,
         takecare || 0 ,

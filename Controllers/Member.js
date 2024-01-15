@@ -149,11 +149,11 @@ export const getMemberByHome = async (req, res) => {
     const { search } = req.query;
 
     if (search) {
-      const sql = `SELECT * FROM users WHERE role = ? AND (home_share_id = ?  `;
+      const sql = `SELECT id, code, username, password, fname, lname, tell, address, role, home_share_id FROM users WHERE role = ? AND home_share_id = ?  AND fname LIKE '%${search}%'  `;
       const [result] = await pool.query(sql, [4, home_share_id]);
       res.status(200).json(result);
     } else {
-      const sql = `SELECT * FROM users WHERE role = ? AND home_share_id = ? `;
+      const sql = `SELECT id, code, username, password, fname, lname, tell, address, role, home_share_id FROM users WHERE role = ? AND home_share_id = ? LIMIT 0,10 `;
       const [result] = await pool.query(sql, [4, home_share_id]);
       res.status(200).json(result);
     }
