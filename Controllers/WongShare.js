@@ -4,17 +4,18 @@ import pool from "../db/mysqlConfig.js";
 export const getAllWongShare = async (req, res) => {
   try {
     const { search } = req.query;
+    console.log(search);
     let sql = null;
     if (search) {
       sql = `SELECT wong_share.*, type_wong.name AS type_wong_name 
       FROM wong_share 
       INNER JOIN type_wong ON wong_share.type_wong_id = type_wong.id 
-      WHERE wong_share.code LIKE '%${search}%' OR wong_share.name LIKE '%${search}%' ORDER BY wong_share.code DESC   `;
+      WHERE  wong_share.name LIKE '%${search}%' ORDER BY wong_share.code DESC LIMIT 0,10   `;
     } else {
       sql = `SELECT wong_share.*, type_wong.name AS type_wong_name , home_share.name AS home_share_name
       FROM wong_share 
       INNER JOIN type_wong ON wong_share.type_wong_id = type_wong.id 
-      INNER JOIN home_share ON wong_share.home_share_id = home_share.id ORDER BY wong_share.code DESC    `;
+      INNER JOIN home_share ON wong_share.home_share_id = home_share.id ORDER BY wong_share.code DESC LIMIT 0,10    `;
     }
     const [result] = await pool.query(sql);
     res.status(200).json(result);
