@@ -8,11 +8,11 @@ export const getUsers = async (req, res) => {
     const { search } = req.query;
 
     if (search) {
-      const sql = `SELECT * FROM users WHERE role = ? AND (code LIKE '%${search}%' OR fname LIKE '%${search}%') `;
+      const sql = `SELECT id, code, home_share_id, tell, password, fname, lname, address FROM users WHERE role = ? AND  fname LIKE '%${search}%' `;
       const [result] = await pool.query(sql, 2);
       res.status(200).json(result);
     } else {
-      const sql = "SELECT * FROM users WHERE role = ?";
+      const sql = "SELECT id, code, home_share_id, tell, password, fname, lname, address FROM users WHERE role = ? LIMIT 0,9";
       const [result] = await pool.query(sql, 2);
       res.status(200).json(result);
     }
@@ -46,7 +46,7 @@ export const putuser = async (req, res) => {
 
 
     // Check user ซ้ำ
-    const sqlCheck = "SELECT * FROM users WHERE tell = ?";
+    const sqlCheck = "SELECT tell FROM users WHERE tell = ?";
     const [resultCheck] = await pool.query(sqlCheck, tell);
 
     if (resultCheck.length > 0) {

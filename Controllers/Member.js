@@ -8,7 +8,8 @@ export const getByHomeShare = async (req, res) => {
     const { home_share_id } = req.params;
 
     if (home_share_id) {
-      const sql = "SELECT * FROM users WHERE role = ? AND home_share_id = ?";
+      const sql =
+        "SELECT id, home_share_id, code, fname, lname, tell, address, username, password FROM users WHERE role = ? AND home_share_id = ?";
       const [result] = await pool.query(sql, [4, home_share_id]);
       res.status(200).json(result);
     } else {
@@ -46,7 +47,7 @@ export const postNewMember = async (req, res) => {
     const newCodeNumber = newData.toString();
 
     // Check User ซ้ำ
-    const sqlCheck = "SELECT * FROM users WHERE username = ?";
+    const sqlCheck = "SELECT username FROM users WHERE username = ?";
     const [resultCheck] = await pool.query(sqlCheck, [username]);
 
     if (resultCheck.length > 0) {
@@ -101,12 +102,10 @@ export const putMember = async (req, res) => {
       address,
     } = req.body;
 
-
-   const newPassword = await checkPassword(username, password)
-
+    const newPassword = await checkPassword(username, password);
 
     // check member ซ้ำ
-    const sqlCheck = "SELECT * FROM users WHERE username = ?";
+    const sqlCheck = "SELECT username FROM users WHERE username = ?";
     const [resultCheck] = await pool.query(sqlCheck, username);
 
     if (resultCheck.length > 0) {
@@ -150,7 +149,7 @@ export const getMemberByHome = async (req, res) => {
     const { search } = req.query;
 
     if (search) {
-      const sql = `SELECT * FROM users WHERE role = ? AND (home_share_id = ? AND code LIKE '%${search}%' OR username LIKE '%${search}%' ) `;
+      const sql = `SELECT * FROM users WHERE role = ? AND (home_share_id = ?  `;
       const [result] = await pool.query(sql, [4, home_share_id]);
       res.status(200).json(result);
     } else {
@@ -215,12 +214,16 @@ export const postMemberByHome = async (req, res) => {
 export const putMemberByHome = async (req, res) => {
   try {
     const { id, username, password, fname, lname, address, tell } = req.body;
-    
+
     const passwordHasg = await bcrypt.hash(password, 10);
     // check password
     const sqlCheckPassword = `SELECT * FROM users WHERE username = ? AND password = ?`;
-    const [resultCheckPassword] = await pool.query(sqlCheckPassword, [username , password]);
-    const newPassword = resultCheckPassword.length > 0 ? password : passwordHasg;
+    const [resultCheckPassword] = await pool.query(sqlCheckPassword, [
+      username,
+      password,
+    ]);
+    const newPassword =
+      resultCheckPassword.length > 0 ? password : passwordHasg;
 
     // Check
     const sqlCheck = `SELECT * FROM users WHERE  username = ?  `;

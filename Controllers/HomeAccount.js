@@ -7,15 +7,14 @@ export const getAllHomeAccount = async (req, res) => {
     const { search } = req.query;
 
     if (search) {
-      const sql = `SELECT * FROM users WHERE role = ? AND (code LIKE '%${search}%' OR fname LIKE '%${search}%')  `;
+      const sql = `SELECT id, home_share_id, tell, username, password, fname, lname, code, address FROM users WHERE role = ? AND  fname LIKE '%${search}%' LIMIT 0,9  `;
       const [result] = await pool.query(sql, 3);
       res.status(200).json(result);
     } else {
-      // const sql = "SELECT * FROM users WHERE role = 3 ";
       const sql = `SELECT users.* , home_share.name as home_share_names
       FROM users 
       JOIN home_share ON home_share_id = home_share.id
-      WHERE role = 3 `;
+      WHERE role = 3 LIMIT 0,9 `;
 
       const [result] = await pool.query(sql);
       // console.log(result);
@@ -47,7 +46,7 @@ export const postHomeAccount = async (req, res) => {
     const newCodeNumber = newData.toString();
 
     // check ใน 1 บ้าน จะมี เจ้าของได้แค่ 1 คน
-    const sqlCheckUser = `SELECT * FROM users WHERE home_share_id = ?  `;
+    const sqlCheckUser = `SELECT home_share_id, username FROM users WHERE home_share_id = ?  `;
     const [resultCheck] = await pool.query(sqlCheckUser, home_share_id);
     // console.log(resultCheck);
 
@@ -89,7 +88,7 @@ export const updateHomeAccount = async (req, res) => {
 
     const passwordHasg = await bcrypt.hash(password, 10);
     // check password
-    const sqlCheckPassword = `SELECT * FROM users WHERE username = ? AND password = ?`;
+    const sqlCheckPassword = `SELECT username, password FROM users WHERE username = ? AND password = ?`;
     const [resultCheckPassword] = await pool.query(sqlCheckPassword, [username, password]);
     const newPassword = resultCheckPassword.length > 0 ? password : passwordHasg;
 
@@ -98,7 +97,7 @@ export const updateHomeAccount = async (req, res) => {
 
 
     //check sql
-    const sqlCheckUser = "SELECT * FROM users WHERE username = ?";
+    const sqlCheckUser = "SELECT username FROM users WHERE username = ?";
     const [resultCheckUser] = await pool.query(sqlCheckUser, username);
 
     if (resultCheckUser.length > 0) {

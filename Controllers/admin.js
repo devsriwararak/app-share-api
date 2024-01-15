@@ -7,9 +7,9 @@ export const getAllAdmin = async (req, res) => {
     const { search } = req.query;
     let sql = "";
     if (search) {
-      sql = `SELECT * FROM users WHERE role = 1 AND fname LIKE '%${search}%' OR code LIKE '%${search}%' `;
+      sql = `SELECT id, code, tell, fname, lname, username, password FROM users WHERE role = 1 AND fname LIKE '%${search}%' LIMIT 0,9  `;
     } else {
-      sql = "SELECT * FROM users WHERE role = 1";
+      sql = "SELECT id, code, tell, fname, lname, username, password FROM users WHERE role = 1 LIMIT 0,9";
     }
     const [result] = await pool.query(sql);
     res.status(200).json(result);
@@ -28,7 +28,7 @@ export const putAdmin = async (req, res) => {
 
     const passwordHasg = await bcrypt.hash(password, 10);
     // check password
-    const sqlCheckPassword = `SELECT * FROM users WHERE username = ? AND password = ?`;
+    const sqlCheckPassword = `SELECT username , password FROM users WHERE username = ? AND password = ?`;
     const [resultCheckPassword] = await pool.query(sqlCheckPassword, [username , password]);
     const newPassword = resultCheckPassword.length > 0 ? password : passwordHasg;
 
