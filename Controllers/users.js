@@ -140,18 +140,24 @@ export const getUserMyHomeShare = async(req,res)=>{
     const {tell} = req.params
     const {search} = req.query
 
-    console.log(5555555555555555555555555);
+   
 
     if(search){
 
-    }else {
-      const sql = `SELECT home_share_users.* , home_share.name AS home_share_name , home_share.code AS home_share_code 
+      const sql = `SELECT home_share_users.* , home_share.name AS home_share_name , home_share.code AS home_share_code, home_share.bank AS home_share_bank
       FROM home_share_users 
       JOIN home_share ON home_share_users.home_share_id = home_share.id
-      WHERE home_share_users.tell = ?
-      `;
+      WHERE home_share_users.tell = ? AND home_share.name LIKE '%${search}%'  LIMIT 0,9`;
       const [result] = await pool.query(sql, [tell])
-      console.log(result);
+
+      res.status(200).json(result)
+
+    }else {
+      const sql = `SELECT home_share_users.* , home_share.name AS home_share_name , home_share.code AS home_share_code, home_share.bank AS home_share_bank
+      FROM home_share_users 
+      JOIN home_share ON home_share_users.home_share_id = home_share.id
+      WHERE home_share_users.tell = ? LIMIT 0,9`;
+      const [result] = await pool.query(sql, [tell])
 
       res.status(200).json(result)
     }
