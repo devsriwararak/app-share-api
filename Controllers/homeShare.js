@@ -14,10 +14,10 @@ export const getHomeShare = async (req, res) => {
     let countQuery = null;
 
     if (search) {
-      sql = `SELECT * FROM home_share WHERE name LIKE '%${search}%' OR code LIKE '%${search}%' ORDER BY code DESC LIMIT 0,5 `;
+      countQuery = `SELECT COUNT(id) AS totalCount FROM home_share WHERE name LIKE '%${search}%' OR code LIKE '%${search}%'   `;
+      sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share WHERE name LIKE '%${search}%' OR code LIKE '%${search}%' ORDER BY code DESC LIMIT ${perPage} OFFSET ${offset} `;
     } else if (status_own) {
-      sql =
-        "SELECT * FROM home_share WHERE status_own = 0  ORDER BY code DESC LIMIT 0,5";
+      sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share WHERE status_own = 0  ORDER BY code DESC LIMIT ${perPage} OFFSET ${offset}`;
     } else {
       countQuery = "SELECT COUNT(id) AS totalCount FROM home_share";
       sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share ORDER BY code ASC LIMIT ${perPage} OFFSET ${offset}`;
@@ -131,7 +131,7 @@ export const putHomeShare = async (req, res) => {
       await pool.query(sql, [
         name,
         bank,
-        account_number,
+        account_number || 0,
         account_name,
         line,
         id,

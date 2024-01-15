@@ -15,7 +15,7 @@ export const authenticationToken = async (req, res, next) => {
   
       const user = jwt.verify(authToken, secret);
   
-      const SELECT_USER_BY_USERNAME = "SELECT * FROM `users` WHERE username = ?";
+      const SELECT_USER_BY_USERNAME = "SELECT username FROM `users` WHERE username = ?";
       const [checkResults] = await pool.query(SELECT_USER_BY_USERNAME, user.username);
       if (!checkResults[0]) {
         throw { message: "user not found" };
@@ -43,7 +43,7 @@ export const authenticationTokenUser = async (req, res, next) => {
 
     const user = jwt.verify(authToken, secret);
 
-    const SELECT_USER_BY_USERNAME = "SELECT * FROM `users` WHERE tell = ?";
+    const SELECT_USER_BY_USERNAME = "SELECT tell FROM `users` WHERE tell = ?";
     const [checkResults] = await pool.query(SELECT_USER_BY_USERNAME, user.tell);
     if (!checkResults[0]) {
       throw { message: "user not found" };
