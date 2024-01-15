@@ -5,35 +5,38 @@ import bcrypt from "bcrypt";
 
 export const getHomeShare = async (req, res) => {
   try {
-    const { search, status_own, page, limit } = req.query;
-    const perPage = 3;
-    const offset = (page - 1) * perPage;
+    const { search, status_own } = req.query;
+    // const { page, limit}= req.query;
+    // const perPage = 3;
+    // const offset = (page - 1) * perPage;
     // const offset = (page - 1) * limit;
     let data = null;
     let sql = null;
-    let countQuery = null;
+    // let countQuery = null;
 
     if (search) {
-      countQuery = `SELECT COUNT(id) AS totalCount FROM home_share WHERE name LIKE '%${search}%' OR code LIKE '%${search}%'   `;
-      sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share WHERE name LIKE '%${search}%' OR code LIKE '%${search}%' ORDER BY code DESC LIMIT ${perPage} OFFSET ${offset} `;
+      // countQuery = `SELECT COUNT(id) AS totalCount FROM home_share WHERE name LIKE '%${search}%' OR code LIKE '%${search}%'   `;
+      // sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share WHERE name LIKE '%${search}%' OR code LIKE '%${search}%' ORDER BY code DESC LIMIT ${perPage} OFFSET ${offset} `;
+      sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share WHERE name LIKE '%${search}%' OR code LIKE '%${search}%' ORDER BY code DESC LIMIT 0,10 `;
+
     } else if (status_own) {
-      sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share WHERE status_own = 0  ORDER BY code DESC LIMIT ${perPage} OFFSET ${offset}`;
+      // sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share WHERE status_own = 0  ORDER BY code DESC LIMIT ${perPage} OFFSET ${offset}`;
+      sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share WHERE status_own = 0  ORDER BY code DESC LIMIT 0,10`;
     } else {
-      countQuery = "SELECT COUNT(id) AS totalCount FROM home_share";
-      sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share ORDER BY code ASC LIMIT ${perPage} OFFSET ${offset}`;
+      // countQuery = "SELECT COUNT(id) AS totalCount FROM home_share";
+      // sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share ORDER BY code ASC LIMIT ${perPage} OFFSET ${offset}`;
+      sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share ORDER BY code DESC LIMIT 0,10`;
+
     }
 
     // PerPages Count
-    const totalPages = await perPages(countQuery);
+    // const totalPages = await perPages(countQuery);
 
     // Finish Process
     const result = await pool.query(sql);
     data = result[0];
 
-    res.status(200).json({
-      result: data,
-      totalPages,
-    });
+    res.status(200).json(data);
   } catch (error) {
     console.log(error);
     res.status(400).json({ message: "เกิดข้อผิดพลาด" });
