@@ -1,6 +1,6 @@
+import { checkPassword } from "../Components/checkPassword.js";
 import pool from "../db/mysqlConfig.js";
 import bcrypt from "bcrypt";
-
 
 export const getAllAdmin = async (req, res) => {
   try {
@@ -9,7 +9,8 @@ export const getAllAdmin = async (req, res) => {
     if (search) {
       sql = `SELECT id, code, tell, fname, lname, username, password FROM users WHERE role = 1 AND fname LIKE '%${search}%' LIMIT 0,9  `;
     } else {
-      sql = "SELECT id, code, tell, fname, lname, username, password FROM users WHERE role = 1 LIMIT 0,9";
+      sql =
+        "SELECT id, code, tell, fname, lname, username, password FROM users WHERE role = 1 LIMIT 0,9";
     }
     const [result] = await pool.query(sql);
     res.status(200).json(result);
@@ -27,23 +28,23 @@ export const putAdmin = async (req, res) => {
     const [resultCheck] = await pool.query(sqlCheck, [username]);
 
     const passwordHasg = await bcrypt.hash(password, 10);
+
     // check password
-    const sqlCheckPassword = `SELECT username , password FROM users WHERE username = ? AND password = ?`;
-    const [resultCheckPassword] = await pool.query(sqlCheckPassword, [username , password]);
-    const newPassword = resultCheckPassword.length > 0 ? password : passwordHasg;
+    const newPassword = await checkPassword(id, password);
 
     if (resultCheck.length > 0) {
-      const checkInsideUsername = resultCheck.find(
-        (obj) => obj.username === username
-      );
-      if (checkInsideUsername) {
+
+
+      const sqlCheckMyId = `SELECT username FROM users WHERE username = ? AND id = ?`;
+      const [resultCheckId] = await pool.query(sqlCheckMyId, [username, id]);
+      if (resultCheckId.length > 0) {
         const sql =
           "UPDATE users SET password = ?, fname = ?, lname = ?, tell = ? WHERE id = ?";
         const data = [newPassword, fname, lname, tell, id];
         const [result] = await pool.query(sql, data);
         res.status(200).json({ message: "ทำรายการสำเร็จ" });
       } else {
-        res.status(400).json({ message: "เกิดข้อผิดพลาด" });
+        res.status(400).json({ message: "ในระบบมีผู้ใช้งานนี้แล้ว" });
       }
     } else {
       const sql =

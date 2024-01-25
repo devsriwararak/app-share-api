@@ -31,13 +31,13 @@ import pool from "../db/mysqlConfig.js";
 // const [resultCheckPassword] = await pool.query(sqlCheckPassword, [username , password]);
 // const newPassword = resultCheckPassword.length > 0 ? password : passwordHasg;
 
-export const checkPassword = async (username, password) => {
+export const checkPassword = async (id, password) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const sqlCheckPassword = `SELECT * FROM users WHERE username = ? AND password = ?`;
+    const sqlCheckPassword = `SELECT * FROM users WHERE id = ? AND password = ?`;
     const [resultCheckPassword] = await pool.query(sqlCheckPassword, [
-      username,
+      id,
       password,
     ]);
 

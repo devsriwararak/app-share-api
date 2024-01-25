@@ -18,7 +18,6 @@ export const getHomeShare = async (req, res) => {
       // countQuery = `SELECT COUNT(id) AS totalCount FROM home_share WHERE name LIKE '%${search}%' OR code LIKE '%${search}%'   `;
       // sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share WHERE name LIKE '%${search}%' OR code LIKE '%${search}%' ORDER BY code DESC LIMIT ${perPage} OFFSET ${offset} `;
       sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share WHERE name LIKE '%${search}%' OR code LIKE '%${search}%' ORDER BY code DESC LIMIT 0,10 `;
-
     } else if (status_own) {
       // sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share WHERE status_own = 0  ORDER BY code DESC LIMIT ${perPage} OFFSET ${offset}`;
       sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share WHERE status_own = 0  ORDER BY code DESC LIMIT 0,10`;
@@ -26,7 +25,6 @@ export const getHomeShare = async (req, res) => {
       // countQuery = "SELECT COUNT(id) AS totalCount FROM home_share";
       // sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share ORDER BY code ASC LIMIT ${perPage} OFFSET ${offset}`;
       sql = `SELECT id, code, name, bank, account_number, account_name, line, status_own FROM home_share ORDER BY code DESC LIMIT 0,10`;
-
     }
 
     // PerPages Count
@@ -228,14 +226,23 @@ export const updateStatusUserInMyHome = async (req, res) => {
     const [resultCheck] = await pool.query(sqlCheck, [home_share_id, tell]);
 
     if (resultCheck.length > 0) {
-      const sql = `UPDATE home_share_users SET fname =? , lname =?  , address =? WHERE id =?  `;
-      await pool.query(sql, [fname, lname, address, id]);
-      // Update To Table USERS
-      await pool.query(
-        `UPDATE users SET fname =? , lname =?  , address =? WHERE tell =?`,
-        [fname, lname, address, tell]
-      );
-      res.status(200).json({ message: "ทำรายการสำเร็จ" });
+      const sqlCheckMyId = `SELECT tell FROM home_share_users WHERE tell = ? AND id = ?`;
+      const [resultCheckMyId] = await pool.query(sqlCheckMyId, [tell, id]);
+
+      if (resultCheckMyId.length > 0) {
+        const sql = `UPDATE home_share_users SET fname =? , lname =?  , address =? WHERE id =?  `;
+        await pool.query(sql, [fname, lname, address, id]);
+        // Update To Table USERS
+        await pool.query(
+          `UPDATE users SET fname =? , lname =?  , address =? WHERE tell =?`,
+          [fname, lname, address, tell]
+        );
+        res.status(200).json({ message: "ทำรายการสำเร็จ" });
+      } else {
+        res
+          .status(400)
+          .json({ message: "มีผู้ใช้งานนี้แล้ว กรุณาลองใหม่อีกครั้ง" });
+      }
     } else {
       const sql = `UPDATE home_share_users SET fname = ? , lname = ? , tell = ? , address = ? WHERE id = ? `;
       await pool.query(sql, [fname, lname, tell, address, id]);

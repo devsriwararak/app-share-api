@@ -102,13 +102,19 @@ export const putMember = async (req, res) => {
       address,
     } = req.body;
 
-    const newPassword = await checkPassword(username, password);
+    const newPassword = await checkPassword(id, password);
 
     // check member ซ้ำ
     const sqlCheck = "SELECT username FROM users WHERE username = ?";
     const [resultCheck] = await pool.query(sqlCheck, username);
 
     if (resultCheck.length > 0) {
+
+
+      const sqlCheckMyId = `SELECT username FROM users WHERE username = ? AND id = ?`;
+      const [resultCheckMyId] = await pool.query(sqlCheckMyId, [username, id]);
+
+      if(resultCheckMyId.length > 0){
       const sql = `UPDATE users SET 
       password = ?,
       fname = ?,
@@ -117,6 +123,11 @@ export const putMember = async (req, res) => {
       address = ? WHERE id = ?  `;
       await pool.query(sql, [newPassword, fname, lname, tell, address, id]);
       res.status(200).json({ message: "ทำรายการสำเร็จ" });
+      }else {
+        res.status(400).json({ message: "มีผู้ใช้งานนี้ในระบบแล้ว กรุณาลองใหม่อีกครั้ง" });
+
+      }
+
     } else {
       const sql = `UPDATE users SET 
         username = ? ,
@@ -124,10 +135,11 @@ export const putMember = async (req, res) => {
       fname = ?,
       lname = ?,
       tell = ?,
-      address = ? WHERE id = ?  `;
+      address = ? 
+      WHERE id = ?  `;
       await pool.query(sql, [
+      username,
         newPassword,
-        password,
         fname,
         lname,
         tell,
@@ -165,7 +177,6 @@ export const getMemberByHome = async (req, res) => {
 
 export const postMemberByHome = async (req, res) => {
   try {
-    console.log(req.body);
     const { username, password, fname, lname, address, tell, home_share_id } =
       req.body;
     const passwordHasg = await bcrypt.hash(password, 10);
@@ -181,7 +192,7 @@ export const postMemberByHome = async (req, res) => {
     const newCodeNumber = newData.toString();
 
     // Check
-    const sqlCheck = `SELECT * FROM users WHERE role = ? AND home_share_id = ? AND username = ?  `;
+    const sqlCheck = `SELECT username FROM users WHERE role = ? AND home_share_id = ? AND username = ?  `;
     const [resultCheck] = await pool.query(sqlCheck, [
       4,
       home_share_id,
@@ -189,7 +200,7 @@ export const postMemberByHome = async (req, res) => {
     ]);
 
     if (resultCheck.length > 0) {
-      res.status(400).json({ message: "มีข้อมูลนี้แล้ว กรุณาลองใหม่อีกครั้ง" });
+      throw new Error('มีข้อมูลนี้แล้ว กรุณาลองใหม่อีกครั้ง!');
     } else {
       const sql = `INSERT INTO users (username, password, fname, lname, address, tell, home_share_id, code, role) VALUES (?,?,?,?,?,?,?,?,?)`;
       await pool.query(sql, [
@@ -216,21 +227,23 @@ export const putMemberByHome = async (req, res) => {
     const { id, username, password, fname, lname, address, tell } = req.body;
 
     const passwordHasg = await bcrypt.hash(password, 10);
-    // check password
-    const sqlCheckPassword = `SELECT * FROM users WHERE username = ? AND password = ?`;
-    const [resultCheckPassword] = await pool.query(sqlCheckPassword, [
-      username,
-      password,
-    ]);
-    const newPassword =
-      resultCheckPassword.length > 0 ? password : passwordHasg;
+
+        // check password
+        const newPassword = await checkPassword(id, password);
 
     // Check
     const sqlCheck = `SELECT * FROM users WHERE  username = ?  `;
     const [resultCheck] = await pool.query(sqlCheck, username);
 
     if (resultCheck.length > 0) {
-      const sql =
+
+
+      const sqlCheckMyId = `SELECT username FROM users WHERE username = ? AND id = ?`;
+      const [resultCheckId] = await pool.query(sqlCheckMyId, [username, id]);
+
+      if(resultCheckId.length > 0){
+
+              const sql =
         "UPDATE users SET   password = ? , fname = ? , lname = ? , address = ? , tell = ?   WHERE id = ?";
       const result = await pool.query(sql, [
         newPassword,
@@ -241,6 +254,12 @@ export const putMemberByHome = async (req, res) => {
         id,
       ]);
       res.status(200).json({ message: "ทำรายการสำเร็จ" });
+
+      }else {
+        res.status(400).json({ message: "มีผู้ใช้งานนี้ในระบบแล้ว กรุณาลองใหม่อีกครั้ง" });
+
+      }
+
     } else {
       const sql =
         "UPDATE users SET  username = ?, password = ? , fname = ? , lname = ? , address = ? , tell = ?   WHERE id = ?";
@@ -257,6 +276,6 @@ export const putMemberByHome = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    req.status(400).json({ message: "ทำรายการไม่สำเร็จ" });
+    res.status(400).json({ message: "ทำรายการไม่สำเร็จ" });
   }
 };

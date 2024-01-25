@@ -2,13 +2,13 @@ import bcrypt from "bcrypt";
 import pool from "../db/mysqlConfig.js";
 
 
-export const CheckPasswordUser = async (tell, password) => {
+export const CheckPasswordUser = async (id, password) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const sqlCheckPassword = `SELECT * FROM users WHERE tell = ? AND password = ?`;
+    const sqlCheckPassword = `SELECT * FROM users WHERE id = ? AND password = ?`;
     const [resultCheckPassword] = await pool.query(sqlCheckPassword, [
-      tell,
+      id,
       password,
     ]);
 

@@ -1,3 +1,4 @@
+import { checkPassword } from "../Components/checkPassword.js";
 import { getNumberCode } from "../Components/getNumberCode.js";
 import pool from "../db/mysqlConfig.js";
 import bcrypt from "bcrypt";
@@ -118,13 +119,8 @@ export const updateHomeAccount = async (req, res) => {
 
     const passwordHasg = await bcrypt.hash(password, 10);
     // check password
-    const sqlCheckPassword = `SELECT username, password FROM users WHERE username = ? AND password = ?`;
-    const [resultCheckPassword] = await pool.query(sqlCheckPassword, [
-      username,
-      password,
-    ]);
-    const newPassword =
-      resultCheckPassword.length > 0 ? password : passwordHasg;
+    const newPassword = await checkPassword(id, password);
+
 
     const newData = {
       username,
@@ -141,9 +137,16 @@ export const updateHomeAccount = async (req, res) => {
     const [resultCheckUser] = await pool.query(sqlCheckUser, username);
 
     if (resultCheckUser.length > 0) {
-      const sql = "UPDATE users SET ? WHERE id = ?";
-      await pool.query(sql, [newData2, id]);
-      res.status(200).json({ message: "ทำรายการสำเร็จ" });
+      const sqlCheckMyId = `SELECT username FROM users WHERE username = ? AND id = ?`;
+      const [resultCheckMyId] = await pool.query(sqlCheckMyId, [username, id]);
+
+      if (resultCheckMyId.length > 0) {
+        const sql = "UPDATE users SET ? WHERE id = ?";
+        await pool.query(sql, [newData2, id]);
+        res.status(200).json({ message: "ทำรายการสำเร็จ" });
+      } else {
+        res.status(400).json({ message: "มีรายการนี้แล้ว กรุณาลองใหม่อรกครั้ง" });
+      }
     } else {
       const sql = "UPDATE users SET ? WHERE id = ?";
       await pool.query(sql, [newData, id]);
