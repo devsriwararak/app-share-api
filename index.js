@@ -14,6 +14,7 @@ import TypeWongRouter from "./Routes/typeWong.js";
 import adminRouter from "./Routes/admin.js";
 import homeAccountRouter from "./Routes/HomeAccount.js";
 import memberRouter from "./Routes/Member.js";
+import playRouter from "./Routes/Play.js";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -53,6 +54,7 @@ app.use("/type_wong", TypeWongRouter);
 app.use("/admin", adminRouter);
 app.use("/home_account", homeAccountRouter);
 app.use("/member", memberRouter);
+app.use('/play', playRouter )
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
