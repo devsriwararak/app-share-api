@@ -14,19 +14,43 @@ export const getAllPlayList = async (req, res) => {
 
       if (resultCheck.length > 0) {
         const id = resultCheck[0].id;
-        const sql = `SELECT id, play_id, start_date FROM play_list WHERE play_id = ?`;
+        // const sql = `SELECT *  FROM play_list WHERE play_id = ?`;
+
+        const sql = `SELECT   play_list.id, play_list.play_id, play_list.start_date, play_list.play_date, play_list.interest, play_list.received, play_list.free_money, play_list.cancel 
+        FROM play_list 
+        WHERE play_list.play_id = ?`;
+
         const [result] = await pool.query(sql, [id]);
 
+       
+
+
         // แปลงข้อมูล
-        const newDataFormat = result.map((item) => {
+        const newDataFormat = await Promise.all(result.map(async (item,index) => {
+
+          const sql_2 =` SELECT  home_share_users.fname AS fname
+          FROM play_list_users 
+          JOIN home_share_users ON play_list_users.home_share_user_id = home_share_users.id
+          WHERE play_list_id = ?`
+          const [result_2] = await pool.query(sql_2, [item.id])
+
           return {
             id: item.id,
             play_id: item.play_id,
             start_date: item.start_date
-              ? moment(item.start_date).tz("Asia/Bangkok").format("DD/MM/YYYY")
+              ? moment(item.start_date).tz("Asia/Bangkok").format("YYYY-MM-DD")
               : null,
+
+            play_date: item.play_date
+              ? moment(item.play_date).tz("Asia/Bangkok").format("YYYY-MM-DD")
+              : null,
+            interest: item.interest,
+            received: item.received,
+            free_money: item.free_money,
+            cancel: item.cancel,
+            fname : result_2
           };
-        });
+        }));
         res.status(200).json(newDataFormat);
       } else {
         res.status(400).json({ message: "เกิดข้อผิดพลาด " });
@@ -97,15 +121,28 @@ export const postNewDay = async (req, res) => {
 
 export const putUpdatePlayList = async (req, res) => {
   try {
-    const receivedData = req.body;
+    const {
+      play_list_id,
+      start_date,
+      play_date,
+      interest,
+      received,
+      free_money,
+    } = req.body;
 
-    receivedData.map(async (data) => {
-      const { play_list_id, date } = data;
+    if (play_list_id && start_date) {
+      const sql = `UPDATE play_list SET start_date = ?, play_date = ?, interest = ?, received = ?, free_money = ?   WHERE id = ?`;
+      await pool.query(sql, [
+        start_date || "",
+        play_date || "",
+        interest || 0,
+        received || 0,
+        free_money || 0,
+        play_list_id,
+      ]);
 
-      const sql = `UPDATE play_list SET start_date = ? WHERE id = ?`;
-      await pool.query(sql, [date, play_list_id]);
-    });
-    res.status(200).json({ message: "ทำรายการสำเร็จ !!" });
+      res.status(200).json({ message: "ทำรายการสำเร็จ !!" });
+    }
   } catch (error) {
     console.error(error);
   }
@@ -129,7 +166,6 @@ export const postNewUserFormyPlayList = async (req, res) => {
 export const getUserForMyPlayList = async (req, res) => {
   try {
     const { play_list_id } = req.query;
-    console.log(play_list_id);
 
     if (play_list_id) {
       const sql = `SELECT play_list_users.id AS id , home_share_users.fname AS user_fname
@@ -153,7 +189,7 @@ export const deleteUserForMyPlayList = async (req, res) => {
     if (id) {
       const sql = `DELETE FROM play_list_users WHERE id = ?`;
       await pool.query(sql, [id]);
-      res.status(200).json({message:'ลบสำเร็จ'});
+      res.status(200).json({ message: "ลบสำเร็จ  " });
     }
   } catch (error) {
     console.log(error);
