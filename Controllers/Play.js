@@ -17,7 +17,7 @@ export const getAllPlayList = async (req, res) => {
       if (resultCheck.length > 0) {
         const id = resultCheck[0].id;
 
-        const sql = `SELECT   play_list.id, play_list.play_id, play_list.start_date, play_list.play_date, play_list.interest, play_list.received, play_list.free_money, play_list.cancel, play_list.deducation_name, deducation_price, play_list.play_status 
+        const sql = `SELECT play_list.id, play_list.play_id, play_list.start_date, play_list.play_date, play_list.interest, play_list.received, play_list.free_money, play_list.cancel, play_list.deducation_name, deducation_price, play_list.play_status 
         FROM play_list 
         WHERE play_list.play_id = ?`;
 
@@ -33,12 +33,15 @@ export const getAllPlayList = async (req, res) => {
             const [result_2] = await pool.query(sql_2, [item.id]);
 
             const thaiFormattedDate_start = item.start_date
-              ? `${moment(item.start_date).locale("th").format("Do MMM")} ${
+              ? // `${moment(item.start_date).locale("th").format("Do MMM")} ${
+                //     moment(item.start_date).get("year") + 543
+                //   }`
+                `${moment(item.start_date).format("DD MM")} ${
                   moment(item.start_date).get("year") + 543
                 }`
               : null;
             const thaiFormattedDate_play = item.play_date
-              ? `${moment(item.play_date).locale("th").format("Do MMM")} ${
+              ? `${moment(item.play_date).format("DD MM")} ${
                   moment(item.play_date).get("year") + 543
                 }`
               : null;
@@ -61,7 +64,10 @@ export const getAllPlayList = async (req, res) => {
             };
           })
         );
-        res.status(200).json(newDataFormat);
+
+        if (newDataFormat.length) {
+          res.status(200).json(newDataFormat);
+        }
       } else {
         res.status(400).json({ message: "เกิดข้อผิดพลาด " });
       }
@@ -567,8 +573,10 @@ export const getAllPlayListMoney = async (req, res) => {
           res.status(400).json({ message: "เกิดข้อผิดพลาด" });
         }
       }
-      // console.log(JSON.stringify(formattedData, null, 2));
-      res.status(200).json(formattedData);
+
+      if (formattedData.length > 0) {
+        res.status(200).json(formattedData);
+      }
     } else {
       res.status(400);
     }
@@ -582,15 +590,15 @@ export const putAddMoney = async (req, res) => {
   try {
     const { id } = req.params;
     const { sum, status } = req.body;
-    let date = null
-    
+    let date = null;
+
     let price = sum;
     if (id && sum) {
       if (status === 0) {
         price = 0;
       } else {
         price = sum;
-        date = moment().format('YYYY-MM-DD')
+        date = moment().format("YYYY-MM-DD");
       }
       const sql = `UPDATE  play_list_money SET price = ?, date = ? WHERE id = ?`;
       await pool.query(sql, [price, date, id]);
