@@ -248,12 +248,12 @@ export const putWongShareById = async (req, res) => {
     const {
       home_share_id,
       name,
-      type_wong_id,
-      installment,
-      price,
-      count,
+      // type_wong_id,
+      // installment,
+      // price,
+      // count,
       pay_for_wong,
-      interest,
+      // interest,
       note,
       id,
       online,
@@ -286,14 +286,14 @@ export const putWongShareById = async (req, res) => {
 
       if (resultCheckMyId.length > 0) {
         const sql =
-          "UPDATE wong_share SET  type_wong_id = ?, interest = ? , installment = ? , price = ? , pay_for_wong = ? , count = ? , note = ?, online = ?, takecare = ?  WHERE id = ?";
+          "UPDATE wong_share SET  pay_for_wong = ? , note = ?, online = ?, takecare = ?  WHERE id = ?";
         const result = pool.query(sql, [
-          type_wong_id || "",
-          interest || 0,
-          installment || 0,
-          price || 0,
+          // type_wong_id || "",
+          // interest || 0,
+          // installment || 0,
+          // price || 0,
           pay_for_wong || 0,
-          count || 0,
+          // count || 0,
           note || "",
           online || 0,
           takecare || 0,
@@ -307,15 +307,10 @@ export const putWongShareById = async (req, res) => {
       }
     } else {
       const sql =
-        "UPDATE wong_share SET name = ? , type_wong_id = ?, interest = ? , installment = ? , price = ? , pay_for_wong = ? , count = ? , note = ?, online = ?, takecare = ?  WHERE id = ?";
+        "UPDATE wong_share SET name = ? ,  pay_for_wong = ? ,  note = ?, online = ?, takecare = ?  WHERE id = ?";
       const result = pool.query(sql, [
         name || "",
-        type_wong_id || "",
-        interest || 0,
-        installment || 0,
-        price || 0,
         pay_for_wong || 0,
-        count || 0,
         note || "",
         online || 0,
         takecare || 0,
