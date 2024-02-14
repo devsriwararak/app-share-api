@@ -61,7 +61,7 @@ export const getAllPlayList = async (req, res) => {
               deducation_name: item.deducation_name,
               deducation_price: item.deducation_price,
               play_status: item.play_status,
-              shipping : item.shipping
+              shipping: item.shipping,
             };
           })
         );
@@ -198,14 +198,12 @@ export const postNewplay = async (req, res) => {
 
       await connection.commit();
       res.status(200).json({ message: "ทำรายการสำเร็จ" });
-
     } catch (error) {
       await connection.rollback();
       console.error(error);
       res.status(400).json({ message: "เกิดข้อผิดพลาด" });
     } finally {
       connection.release();
-
     }
   } catch (error) {
     console.error(error);
@@ -413,7 +411,7 @@ export const putUpdatePlayList_2 = async (req, res) => {
       count,
       type_wong_id,
       interest,
-      shipping
+      shipping,
     } = req.body;
 
     console.log(req.body);
@@ -637,21 +635,19 @@ export const putUpdatePlayList_2 = async (req, res) => {
         ]);
         // console.log(resultCheckPlayList);
         let add_received = 0;
-        let add_shipping = 0
+        let add_shipping = 0;
         // ยอดเงินที่ต้องจ่ายต่อ หลังเล่นชนะไปแล้ว
         let sum_money = Number(installment) + interest;
 
         for (let i = 0; i < resultCheckPlayList.length; i++) {
           if (i === 0) {
             add_received = price;
-          }  else {
+          } else {
             add_received = price;
-            add_shipping = shipping || 0
+            add_shipping = shipping || 0;
           }
 
-  
           if (resultCheckPlayList[i].id === play_list_id) {
-
             const sqlUpdatePlayList = `UPDATE play_list SET  received = ?, shipping = ? , play_date = ?, deducation_name = ?, deducation_price = ? WHERE id = ?  `;
             const [resultUpdatePlayList] = await pool.query(sqlUpdatePlayList, [
               add_received,
@@ -763,89 +759,155 @@ export const deleteUserForMyPlayList = async (req, res) => {
 // deducation
 
 // Money
+// ปรับปรุง code ใหม่ ให้ทำงานเหมือนเดิม แต่มีประสิทธิภาพการทำงานเร็วขึ้น
+// export const getAllPlayListMoney = async (req, res) => {
+//   try {
+//     const { wong_share_id } = req.query;
+
+//     if (wong_share_id) {
+//       // ค้นหา ID จาก Table Play
+//       const sqlPlay = `SELECT id FROM play WHERE wong_share_id = ? LIMIT 1`;
+//       const [resultPlay] = await pool.query(sqlPlay, [wong_share_id]);
+//       const play_id = resultPlay[0]?.id;
+
+//       const query = `
+//       SELECT play_list.id AS id, play_list.user_id AS name, play_list.interest AS interest
+//       FROM play_list
+//       WHERE play_list.play_id = ?
+//     `;
+
+//       const [resultPlayList] = await pool.query(query, [play_id]);
+
+//       // console.log(resultPlayList);
+
+//       const formattedData = [];
+//       let currentId = null;
+//       let currentObject = null;
+
+//       // SELECT home_share_users
+//       const sqlname = `SELECT home_share_users.fname AS fname
+//               FROM play_list_users
+//               INNER JOIN home_share_users ON play_list_users.home_share_user_id = home_share_users.id
+//               WHERE play_list_users.play_list_id = ? GROUP BY home_share_users.fname`;
+
+//       // SELECT play_list_money
+//       const sqlPlayListMoney = `
+//               SELECT id, sum, price, play_list_id, date
+//               FROM play_list_money
+//               WHERE play_list_id = ? ORDER BY id
+//               `;
+
+//       for (const row of resultPlayList) {
+//         try {
+//           const [resultName] = await pool.query(sqlname, [row.id]);
+//           const [resultPlayListMoney] = await pool.query(sqlPlayListMoney, [
+//             row.id,
+//           ]);
+
+//           if (row.id !== currentId) {
+//             // เมื่อพบ id ใหม่, สร้าง object ใหม่
+//             currentObject = {
+//               id: row.id,
+//               name: row.name,
+//               interest: row.interest,
+//               fname: resultName,
+//             };
+//             formattedData.push(currentObject);
+//             currentId = row.id;
+//           }
+
+//           // เพิ่มข้อมูล money เข้าไปใน object
+//           currentObject.money = currentObject.money || [];
+
+//           const test = resultPlayListMoney.map((item, index) => {
+//             currentObject.money.push({
+//               money_id: item.id,
+//               sum: item.sum,
+//               price: item.price,
+//               play_list_id: item.play_list_id,
+//               date: item.date ? moment(item.date).format("DD-MM-YYYY") : "",
+//             });
+//           });
+//         } catch (error) {
+//           console.error("Error fetching data:", error);
+//           res.status(400).json({ message: "เกิดข้อผิดพลาด" });
+//         }
+//       }
+
+//       if (formattedData.length > 0) {
+//         res.status(200).json(formattedData);
+//       }
+//     } else {
+//       res.status(400);
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     res.status(400);
+//   }
+// };
+
 export const getAllPlayListMoney = async (req, res) => {
   try {
     const { wong_share_id } = req.query;
 
-    if (wong_share_id) {
-      // ค้นหา ID จาก Table Play
-      const sqlPlay = `SELECT id FROM play WHERE wong_share_id = ? LIMIT 1`;
-      const [resultPlay] = await pool.query(sqlPlay, [wong_share_id]);
-      const play_id = resultPlay[0]?.id;
+    if (!wong_share_id) {
+      return res.status(400).json({ message: "ไม่พบข้อมูล wong_share_id" });
+    }
 
-      const query = `
-      SELECT play_list.id AS id, play_list.user_id AS name, play_list.interest AS interest
-      FROM play_list
-      WHERE play_list.play_id = ?
+    const playIdQuery = `SELECT id FROM play WHERE wong_share_id = ? LIMIT 1`;
+    const [playIdResult] = await pool.query(playIdQuery, [wong_share_id]);
+    const playId = playIdResult[0]?.id;
+
+    if (!playId) {
+      return res.status(400).json({ message: "ไม่พบข้อมูล play_id" });
+    }
+
+    const playListQuery = `
+      SELECT pl.id, pl.user_id AS name, pl.interest, GROUP_CONCAT(hsu.fname) AS fname
+      FROM play_list AS pl
+      LEFT JOIN play_list_users AS plu ON pl.id = plu.play_list_id
+      LEFT JOIN home_share_users AS hsu ON plu.home_share_user_id = hsu.id
+      WHERE pl.play_id = ?
+      GROUP BY pl.id, pl.user_id, pl.interest
     `;
 
-      const [resultPlayList] = await pool.query(query, [play_id]);
+    const playListMoneyQuery = `
+      SELECT plm.id, plm.sum, plm.price, plm.play_list_id, DATE_FORMAT(plm.date, '%d-%m-%Y') AS date
+      FROM play_list_money AS plm
+      WHERE plm.play_list_id = ?
+      ORDER BY plm.id
+    `;
 
-      // console.log(resultPlayList);
+    const [playListResults] = await pool.query(playListQuery, [playId]);
 
-      const formattedData = [];
-      let currentId = null;
-      let currentObject = null;
+    const formattedData = [];
+    for (const row of playListResults) {
+      const [playListMoneyResults] = await pool.query(playListMoneyQuery, [
+        row.id,
+      ]);
 
-      // SELECT home_share_users
-      const sqlname = `SELECT home_share_users.fname AS fname
-              FROM play_list_users
-              INNER JOIN home_share_users ON play_list_users.home_share_user_id = home_share_users.id
-              WHERE play_list_users.play_list_id = ? GROUP BY home_share_users.fname`;
+      const money = playListMoneyResults.map((item) => ({
+        money_id: item.id,
+        sum: item.sum,
+        price: item.price,
+        play_list_id: item.play_list_id,
+        date: item.date,
+      }));
+      const fname = row.fname ? row.fname.split(",") : [];
 
-      // SELECT play_list_money
-      const sqlPlayListMoney = `
-              SELECT id, sum, price, play_list_id, date
-              FROM play_list_money
-              WHERE play_list_id = ? ORDER BY id 
-              `;
-
-      for (const row of resultPlayList) {
-        try {
-          const [resultName] = await pool.query(sqlname, [row.id]);
-          const [resultPlayListMoney] = await pool.query(sqlPlayListMoney, [
-            row.id,
-          ]);
-
-          if (row.id !== currentId) {
-            // เมื่อพบ id ใหม่, สร้าง object ใหม่
-            currentObject = {
-              id: row.id,
-              name: row.name,
-              interest: row.interest,
-              fname: resultName,
-            };
-            formattedData.push(currentObject);
-            currentId = row.id;
-          }
-
-          // เพิ่มข้อมูล money เข้าไปใน object
-          currentObject.money = currentObject.money || [];
-
-          const test = resultPlayListMoney.map((item, index) => {
-            currentObject.money.push({
-              money_id: item.id,
-              sum: item.sum,
-              price: item.price,
-              play_list_id: item.play_list_id,
-              date: item.date ? moment(item.date).format("DD-MM-YYYY") : "",
-            });
-          });
-        } catch (error) {
-          console.error("Error fetching data:", error);
-          res.status(400).json({ message: "เกิดข้อผิดพลาด" });
-        }
-      }
-
-      if (formattedData.length > 0) {
-        res.status(200).json(formattedData);
-      }
-    } else {
-      res.status(400);
+      formattedData.push({
+        id: row.id,
+        name: row.name,
+        interest: row.interest,
+        fname,
+        money,
+      });
     }
+
+    res.status(200).json(formattedData);
   } catch (error) {
     console.error(error);
-    res.status(400);
+    res.status(400).json({ message: "เกิดข้อผิดพลาด" });
   }
 };
 
