@@ -17,7 +17,7 @@ export const getAllPlayList = async (req, res) => {
       if (resultCheck.length > 0) {
         const id = resultCheck[0].id;
 
-        const sql = `SELECT play_list.id, play_list.play_id, play_list.start_date, play_list.play_date, play_list.interest, play_list.received, play_list.free_money, play_list.cancel, play_list.deducation_name, deducation_price, play_list.play_status 
+        const sql = `SELECT play_list.id, play_list.play_id, play_list.start_date, play_list.play_date, play_list.interest, play_list.received, play_list.free_money, play_list.shipping, play_list.cancel, play_list.deducation_name, deducation_price, play_list.play_status 
         FROM play_list 
         WHERE play_list.play_id = ?`;
 
@@ -61,6 +61,7 @@ export const getAllPlayList = async (req, res) => {
               deducation_name: item.deducation_name,
               deducation_price: item.deducation_price,
               play_status: item.play_status,
+              shipping : item.shipping
             };
           })
         );
@@ -78,55 +79,133 @@ export const getAllPlayList = async (req, res) => {
   }
 };
 
+// node.js มี for loop 2 อันต่อกัน อยากได้ ถ้า for loop 1 insert database เสร็จ ให้ res.status 200
+// export const postNewplay = async (req, res) => {
+//   try {
+//     const { wong_share_id, home_share_id, count } = req.body;
+
+//     // เช็คว่า บ้านแชร์ 001 นี้ ต้องไม่มีวงที่ส่งมา เปิดอยู่
+//     const sqlCheck = `SELECT wong_share_id FROM play WHERE home_share_id = ? AND wong_share_id = ?`;
+//     const [resultCheck] = await pool.query(sqlCheck, [
+//       home_share_id,
+//       wong_share_id,
+//     ]);
+
+//     if (resultCheck.length > 0) {
+//       res.status(400).json({ message: "วงค์แชร์นี้เปิดเล่นอยู่แล่ว" });
+//     } else {
+//       const sql = `INSERT INTO play (home_share_id, wong_share_id ) VALUES (?, ?)`;
+//       const [result] = await pool.query(sql, [home_share_id, wong_share_id]);
+
+//       // ID ล่าสุด
+//       const lastInsertedId = result.insertId;
+
+//       const currentDate = moment(); // ใช้ moment สร้างวันที่ปัจจุบัน
+//       const formattedCurrentDate = currentDate.format("YYYY-MM-DD"); // จัดรูปแบบวันที่
+
+//       //   loop INSERT ตามจำนวน count
+//       for (let i = 0; i < count; i++) {
+//         // เพิ่ม วันที่ ตาม count
+//         const dateToAdd = currentDate.clone().add(i, "days"); // เพิ่มวัน
+//         const formattedDate = dateToAdd.format("YYYY-MM-DD");
+
+//         const data = {
+//           play_id: lastInsertedId,
+//           start_date: formattedDate,
+//         };
+
+//         // Table play_list
+//         const sqlList = `INSERT INTO play_list ( play_id, start_date  ) VALUES (?, ?) `;
+//         const [resultList] = await pool.query(sqlList, [
+//           data.play_id,
+//           data.start_date,
+//         ]);
+//         // ID ล่าสุด
+//         const play_list_id = resultList.insertId;
+
+//         for (let x = 0; x < count; x++) {
+//           // // Table play_list_money
+//           const sqlListMoney = `INSERT INTO play_list_money ( play_list_id, play_id  ) VALUES (?,?) `;
+//           await pool.query(sqlListMoney, [play_list_id, data.play_id]);
+//         }
+//       }
+//       res.status(200).json({ message: "ทำรายการสำเร็จ" });
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     res.status(400).json({ message: "เกิดข้อผิดพลาด" });
+//   }
+// };
+
+// จาก code นี้ ที่ถูกต้อง อยากให้ status 200 ทำงาน หลังจาก insert play_list เสร็จ
 export const postNewplay = async (req, res) => {
   try {
     const { wong_share_id, home_share_id, count } = req.body;
 
-    // เช็คว่า บ้านแชร์ 001 นี้ ต้องไม่มีวงที่ส่งมา เปิดอยู่
-    const sqlCheck = `SELECT wong_share_id FROM play WHERE home_share_id = ? AND wong_share_id = ?`;
-    const [resultCheck] = await pool.query(sqlCheck, [
-      home_share_id,
-      wong_share_id,
-    ]);
+    const connection = await pool.getConnection();
+    await connection.beginTransaction();
 
-    if (resultCheck.length > 0) {
-      res.status(400).json({ message: "วงค์แชร์นี้เปิดเล่นอยู่แล่ว" });
-    } else {
-      const sql = `INSERT INTO play (home_share_id, wong_share_id ) VALUES (?, ?)`;
-      const [result] = await pool.query(sql, [home_share_id, wong_share_id]);
-      res.status(200).json({ message: "ทำรายการสำเร็จ" });
-      // ID ล่าสุด
-      const lastInsertedId = result.insertId;
+    try {
+      const sqlCheck = `SELECT wong_share_id FROM play WHERE home_share_id = ? AND wong_share_id = ?`;
+      const [resultCheck] = await connection.query(sqlCheck, [
+        home_share_id,
+        wong_share_id,
+      ]);
 
-      const currentDate = moment(); // ใช้ moment สร้างวันที่ปัจจุบัน
-      const formattedCurrentDate = currentDate.format("YYYY-MM-DD"); // จัดรูปแบบวันที่
+      if (resultCheck.length > 0) {
+        res.status(400).json({ message: "วงค์แชร์นี้เปิดเล่นอยู่แล้ว" });
+        return;
+      }
 
-      //   loop INSERT ตามจำนวน count
+      const sqlInsertPlay = `INSERT INTO play (home_share_id, wong_share_id) VALUES (?, ?)`;
+      const [resultInsertPlay] = await connection.query(sqlInsertPlay, [
+        home_share_id,
+        wong_share_id,
+      ]);
+
+      const lastInsertedId = resultInsertPlay.insertId;
+
+      const currentDate = moment();
+      const formattedCurrentDate = currentDate.format("YYYY-MM-DD");
+
+      const sqlInsertPlayList = `INSERT INTO play_list (play_id, start_date) VALUES `;
+      const playListValues = [];
       for (let i = 0; i < count; i++) {
-        // เพิ่ม วันที่ ตาม count
-        const dateToAdd = currentDate.clone().add(i, "days"); // เพิ่มวัน
+        const dateToAdd = currentDate.clone().add(i, "days");
         const formattedDate = dateToAdd.format("YYYY-MM-DD");
+        playListValues.push(`(${lastInsertedId}, '${formattedDate}')`);
+      }
+      const sqlFinalInsertPlayList =
+        sqlInsertPlayList + playListValues.join(", ");
+      await connection.query(sqlFinalInsertPlayList);
 
-        const data = {
-          play_id: lastInsertedId,
-          start_date: formattedDate,
-        };
+      const sqlSelectPlayListIds = `SELECT id FROM play_list WHERE play_id = ?`;
+      const [playListIds] = await connection.query(sqlSelectPlayListIds, [
+        lastInsertedId,
+      ]);
 
-        // Table play_list
-        const sqlList = `INSERT INTO play_list ( play_id, start_date  ) VALUES (?, ?) `;
-        const [resultList] = await pool.query(sqlList, [
-          data.play_id,
-          data.start_date,
-        ]);
-        // ID ล่าสุด
-        const play_list_id = resultList.insertId;
-
-        for (let x = 0; x < count; x++) {
-          // // Table play_list_money
-          const sqlListMoney = `INSERT INTO play_list_money ( play_list_id, play_id  ) VALUES (?,?) `;
-          await pool.query(sqlListMoney, [play_list_id, data.play_id]);
+      // Insert into play_list_money for each play_list
+      for (const playListIdRow of playListIds) {
+        const playListId = playListIdRow.id;
+        const sqlInsertPlayListMoney = `INSERT INTO play_list_money (play_list_id, play_id) VALUES (?, ?)`;
+        for (let i = 0; i < count; i++) {
+          await connection.query(sqlInsertPlayListMoney, [
+            playListId,
+            lastInsertedId,
+          ]);
         }
       }
+
+      await connection.commit();
+      res.status(200).json({ message: "ทำรายการสำเร็จ" });
+
+    } catch (error) {
+      await connection.rollback();
+      console.error(error);
+      res.status(400).json({ message: "เกิดข้อผิดพลาด" });
+    } finally {
+      connection.release();
+
     }
   } catch (error) {
     console.error(error);
@@ -332,116 +411,300 @@ export const putUpdatePlayList_2 = async (req, res) => {
       price,
       index,
       count,
+      type_wong_id,
+      interest,
+      shipping
     } = req.body;
 
     console.log(req.body);
 
-    if (play_list_id && play_date != "Invalid date") {
-      // UPDATE PLAY LIST  *********************************************
+    // TYPE_1 ##
+    if (type_wong_id === 1) {
+      if (play_list_id && play_date != "Invalid date") {
+        // UPDATE PLAY LIST  *********************************************
+        const sqlCheckPlayList = `SELECT id, interest, received, play_id  FROM play_list WHERE play_id = ? `;
+        const [resultCheckPlayList] = await pool.query(sqlCheckPlayList, [
+          play_id,
+        ]);
+        // console.log(resultCheckPlayList);
+        let add_interest = 0;
+        let add_received = 0;
+        // ยอดเงินที่ต้องจ่ายต่อ หลังเล่นชนะไปแล้ว
+        let sum_money = Number(deducation_price) + installment;
 
-      const sqlCheckPlayList = `SELECT id, interest, received, play_id  FROM play_list WHERE play_id = ? `;
-      const [resultCheckPlayList] = await pool.query(sqlCheckPlayList, [
-        play_id,
-      ]);
-      // console.log(resultCheckPlayList);
-      let add_interest = 0;
-      let add_received = 0;
-      // ยอดเงินที่ต้องจ่ายต่อ หลังเล่นชนะไปแล้ว
-      let sum_money = installment + deducation_price;
-      for (let i = 0; i < resultCheckPlayList.length; i++) {
-        if (i === 0) {
-          add_interest = 0;
-          add_received = price;
-        } else if (i === 1) {
-          add_interest = deducation_price;
-          add_received = price;
-        } else {
-          add_interest = deducation_price;
-          add_received = price + (i - 1) * deducation_price;
-        }
-
-        if (resultCheckPlayList[i].id === play_list_id) {
-          const sqlUpdatePlayList = `UPDATE play_list SET interest = ? , received = ?, play_date = ?, deducation_name = ?, deducation_price = ? WHERE id = ?  `;
-          const [resultUpdatePlayList] = await pool.query(sqlUpdatePlayList, [
-            add_interest,
-            add_received,
-            play_date,
-            deducation_name,
-            deducation_price,
-            play_list_id,
-          ]);
-
-          // UPDATE play_list_money แนวตั้ง ใน loop for ************************************************
-          if (resultUpdatePlayList) {
-            const sqlProcessListMoney = `SELECT id, sum FROM play_list_money WHERE play_id = ?`;
-            const [resultProcessListMoney] = await pool.query(
-              sqlProcessListMoney,
-              [resultCheckPlayList[i].play_id]
-            );
-
-            // แบ่งข้อมูลเป็นชุดละ 5 count และอัปเดตค่าเฉพาะ index ที่ 0 ของแต่ละชุด
-            for (let j = 0; j < resultProcessListMoney.length; j += count) {
-              if (j < count) {
-                continue;
-              }
-
-              const group = resultProcessListMoney.slice(j, j + count);
-
-              // ตรวจสอบว่าอยู่ที่ชุดที่ต้องการอัปเดตหรือไม่
-              if (j + index < resultProcessListMoney.length) {
-                const idToUpdate = group[index].id; // เลือก index ที่ 2 ของแต่ละชุด
-
-                // เช็ค sum ของ id ก่อนหน้า ว่ามีค่ามากกว่า sum ที่จะทำการอัปเดตหรือไม่
-                const prevSum = resultProcessListMoney.find(
-                  (item) => item.id == idToUpdate
-                ).sum;
-
-                if (prevSum <= installment) {
-                  const sqlUpdateProcessListMoney = `UPDATE play_list_money SET sum = ? WHERE id = ?`;
-                  await pool.query(sqlUpdateProcessListMoney, [
-                    installment,
-                    idToUpdate,
-                  ]);
-                }
-              }
-            }
-
-            // UPDATE play_list_money แนวนอน ใน loop for *****************************************************
-            // index = 1
-            const sqlProcessListMoneyByPlayListId = `SELECT id, sum FROM play_list_money WHERE play_list_id = ?`;
-            const [resultProcessListMoneyByPlayListId] = await pool.query(
-              sqlProcessListMoneyByPlayListId,
-              [play_list_id]
-            );
-
-            if (resultProcessListMoneyByPlayListId) {
-              const sqlUpdateProcessListMoney = `UPDATE play_list_money SET sum = ? WHERE id = ?`;
-
-              if (index !== 0) {
-                for (
-                  let i = index + 1;
-                  i < resultProcessListMoneyByPlayListId.length;
-                  i++
-                ) {
-                  const idToUpdate = resultProcessListMoneyByPlayListId[i].id;
-                  const [resultIdToUpdate] = await pool.query(
-                    sqlUpdateProcessListMoney,
-                    [sum_money, idToUpdate]
-                  );
-                }
-              }
-
-              res.status(200).json({ message: "ทำรายการสำเร็จ" });
-            }
+        for (let i = 0; i < resultCheckPlayList.length; i++) {
+          if (i === 0) {
+            add_interest = 0;
+            add_received = price;
+          } else if (i === 1) {
+            add_interest = Number(deducation_price);
+            add_received = Number(deducation_price);
           } else {
-            throw new Error("อัพเดท PL ไม่สำเร็จ");
+            add_interest = installment;
+            add_received = installment + resultCheckPlayList[i - 1].received;
+          }
+
+          if (resultCheckPlayList[i].id === play_list_id) {
+            const sqlUpdatePlayList = `UPDATE play_list SET interest = ? , received = ?, play_date = ?, deducation_name = ?, deducation_price = ? WHERE id = ?  `;
+            const [resultUpdatePlayList] = await pool.query(sqlUpdatePlayList, [
+              add_interest,
+              add_received,
+              play_date,
+              deducation_name,
+              deducation_price,
+              play_list_id,
+            ]);
+
+            // UPDATE play_list_money แนวตั้ง ใน loop for ************************************************
+            if (resultUpdatePlayList) {
+              const sqlProcessListMoney = `SELECT id, sum FROM play_list_money WHERE play_id = ?`;
+              const [resultProcessListMoney] = await pool.query(
+                sqlProcessListMoney,
+                [resultCheckPlayList[i].play_id]
+              );
+
+              // แบ่งข้อมูลเป็นชุดละ 5 count และอัปเดตค่าเฉพาะ index ที่ 0 ของแต่ละชุด
+              for (let j = 0; j < resultProcessListMoney.length; j += count) {
+                if (j < count) {
+                  continue;
+                }
+
+                const group = resultProcessListMoney.slice(j, j + count);
+
+                // ตรวจสอบว่าอยู่ที่ชุดที่ต้องการอัปเดตหรือไม่
+                if (j + index < resultProcessListMoney.length) {
+                  const idToUpdate = group[index].id; // เลือก index ที่ 2 ของแต่ละชุด
+
+                  // เช็ค sum ของ id ก่อนหน้า ว่ามีค่ามากกว่า sum ที่จะทำการอัปเดตหรือไม่
+                  const prevSum = resultProcessListMoney.find(
+                    (item) => item.id == idToUpdate
+                  ).sum;
+
+                  if (prevSum <= installment) {
+                    const sqlUpdateProcessListMoney = `UPDATE play_list_money SET sum = ? WHERE id = ?`;
+                    await pool.query(sqlUpdateProcessListMoney, [
+                      installment,
+                      idToUpdate,
+                    ]);
+                  }
+                }
+              }
+
+              // UPDATE play_list_money แนวนอน ใน loop for *****************************************************
+              // index = 1
+              const sqlProcessListMoneyByPlayListId = `SELECT id, sum FROM play_list_money WHERE play_list_id = ?`;
+              const [resultProcessListMoneyByPlayListId] = await pool.query(
+                sqlProcessListMoneyByPlayListId,
+                [play_list_id]
+              );
+
+              if (resultProcessListMoneyByPlayListId) {
+                const sqlUpdateProcessListMoney = `UPDATE play_list_money SET sum = ? WHERE id = ?`;
+
+                if (index !== 0) {
+                  for (
+                    let i = index + 1;
+                    i < resultProcessListMoneyByPlayListId.length;
+                    i++
+                  ) {
+                    const idToUpdate = resultProcessListMoneyByPlayListId[i].id;
+                    const [resultIdToUpdate] = await pool.query(
+                      sqlUpdateProcessListMoney,
+                      [sum_money, idToUpdate]
+                    );
+                  }
+                }
+
+                res.status(200).json({ message: "ทำรายการสำเร็จ" });
+              }
+            } else {
+              throw new Error("อัพเดท PL ไม่สำเร็จ");
+            }
           }
         }
       }
+    }
+    // TYPE_2 ##
+    else if (type_wong_id === 2) {
+      if (play_list_id && play_date != "Invalid date") {
+        // UPDATE PLAY LIST  *********************************************
+        const sqlCheckPlayList = `SELECT id,interest, received, play_id  FROM play_list WHERE play_id = ? `;
+        const [resultCheckPlayList] = await pool.query(sqlCheckPlayList, [
+          play_id,
+        ]);
+        // console.log(resultCheckPlayList);
+        let add_received = 0;
+        // ยอดเงินที่ต้องจ่ายต่อ หลังเล่นชนะไปแล้ว
+        let sum_money = Number(installment) + interest;
 
-      // console.log(resultCheckPlayList);
+        for (let i = 0; i < resultCheckPlayList.length; i++) {
+          if (i === 0) {
+            add_received = price;
+          } else if (i === 1) {
+            add_received = price;
+          } else {
+            add_received = resultCheckPlayList[i - 1].received + interest;
+          }
+
+          if (resultCheckPlayList[i].id === play_list_id) {
+            const sqlUpdatePlayList = `UPDATE play_list SET  received = ?, play_date = ?, deducation_name = ?, deducation_price = ? WHERE id = ?  `;
+            const [resultUpdatePlayList] = await pool.query(sqlUpdatePlayList, [
+              add_received,
+              play_date,
+              deducation_name,
+              deducation_price,
+              play_list_id,
+            ]);
+
+            // UPDATE play_list_money แนวตั้ง ใน loop for ************************************************
+            if (resultUpdatePlayList) {
+              const sqlProcessListMoney = `SELECT id, sum FROM play_list_money WHERE play_id = ?`;
+              const [resultProcessListMoney] = await pool.query(
+                sqlProcessListMoney,
+                [resultCheckPlayList[i].play_id]
+              );
+
+              // แบ่งข้อมูลเป็นชุดละ 5 count และอัปเดตค่าเฉพาะ index ที่ 0 ของแต่ละชุด
+              for (let j = 0; j < resultProcessListMoney.length; j += count) {
+                if (j < count) {
+                  continue;
+                }
+
+                const group = resultProcessListMoney.slice(j, j + count);
+
+                // ตรวจสอบว่าอยู่ที่ชุดที่ต้องการอัปเดตหรือไม่
+                if (j + index < resultProcessListMoney.length) {
+                  const idToUpdate = group[index].id; // เลือก index ที่ 2 ของแต่ละชุด
+
+                  // เช็ค sum ของ id ก่อนหน้า ว่ามีค่ามากกว่า sum ที่จะทำการอัปเดตหรือไม่
+                  const prevSum = resultProcessListMoney.find(
+                    (item) => item.id == idToUpdate
+                  ).sum;
+
+                  if (prevSum <= installment) {
+                    const sqlUpdateProcessListMoney = `UPDATE play_list_money SET sum = ? WHERE id = ?`;
+                    await pool.query(sqlUpdateProcessListMoney, [
+                      installment,
+                      idToUpdate,
+                    ]);
+                  }
+                }
+              }
+
+              // UPDATE play_list_money แนวนอน ใน loop for *****************************************************
+              // index = 1
+              const sqlProcessListMoneyByPlayListId = `SELECT id, sum FROM play_list_money WHERE play_list_id = ?`;
+              const [resultProcessListMoneyByPlayListId] = await pool.query(
+                sqlProcessListMoneyByPlayListId,
+                [play_list_id]
+              );
+
+              if (resultProcessListMoneyByPlayListId) {
+                const sqlUpdateProcessListMoney = `UPDATE play_list_money SET sum = ? WHERE id = ?`;
+
+                if (index !== 0) {
+                  for (
+                    let i = index + 1;
+                    i < resultProcessListMoneyByPlayListId.length;
+                    i++
+                  ) {
+                    const idToUpdate = resultProcessListMoneyByPlayListId[i].id;
+                    const [resultIdToUpdate] = await pool.query(
+                      sqlUpdateProcessListMoney,
+                      [sum_money, idToUpdate]
+                    );
+                  }
+                }
+
+                res.status(200).json({ message: "ทำรายการสำเร็จ" });
+              }
+            } else {
+              throw new Error("อัพเดท PL ไม่สำเร็จ");
+            }
+          }
+        }
+      } else {
+        throw new Error("ไม่พบข้อมูล play_list_id และ วันที่เปีย ");
+      }
+    }
+    // TYPE_3 ##
+    else if (type_wong_id === 3) {
+      if (play_list_id && play_date != "Invalid date") {
+        // UPDATE PLAY LIST  *********************************************
+        const sqlCheckPlayList = `SELECT id,interest, received, play_id  FROM play_list WHERE play_id = ? `;
+        const [resultCheckPlayList] = await pool.query(sqlCheckPlayList, [
+          play_id,
+        ]);
+        // console.log(resultCheckPlayList);
+        let add_received = 0;
+        let add_shipping = 0
+        // ยอดเงินที่ต้องจ่ายต่อ หลังเล่นชนะไปแล้ว
+        let sum_money = Number(installment) + interest;
+
+        for (let i = 0; i < resultCheckPlayList.length; i++) {
+          if (i === 0) {
+            add_received = price;
+          }  else {
+            add_received = price;
+            add_shipping = shipping || 0
+          }
+
+  
+          if (resultCheckPlayList[i].id === play_list_id) {
+
+            const sqlUpdatePlayList = `UPDATE play_list SET  received = ?, shipping = ? , play_date = ?, deducation_name = ?, deducation_price = ? WHERE id = ?  `;
+            const [resultUpdatePlayList] = await pool.query(sqlUpdatePlayList, [
+              add_received,
+              add_shipping,
+              play_date,
+              deducation_name,
+              deducation_price,
+              play_list_id,
+            ]);
+
+            // UPDATE play_list_money แนวตั้ง ใน loop for ************************************************
+            if (resultUpdatePlayList) {
+              const sqlProcessListMoney = `SELECT id, sum FROM play_list_money WHERE play_id = ?`;
+              const [resultProcessListMoney] = await pool.query(
+                sqlProcessListMoney,
+                [resultCheckPlayList[i].play_id]
+              );
+
+              const sqlProcessListMoneyByPlayListId = `SELECT id, sum FROM play_list_money WHERE play_list_id = ?`;
+              const [resultProcessListMoneyByPlayListId] = await pool.query(
+                sqlProcessListMoneyByPlayListId,
+                [play_list_id]
+              );
+
+              if (resultProcessListMoneyByPlayListId) {
+                const sqlUpdateProcessListMoney = `UPDATE play_list_money SET sum = ? WHERE id = ?`;
+
+                if (index !== 0) {
+                  for (
+                    let i = 0;
+                    i < resultProcessListMoneyByPlayListId.length;
+                    i++
+                  ) {
+                    const idToUpdate = resultProcessListMoneyByPlayListId[i].id;
+                    const [resultIdToUpdate] = await pool.query(
+                      sqlUpdateProcessListMoney,
+                      [deducation_price, idToUpdate]
+                    );
+                  }
+                }
+
+                res.status(200).json({ message: "ทำรายการสำเร็จ" });
+              }
+            } else {
+              throw new Error("อัพเดท PL ไม่สำเร็จ");
+            }
+          }
+        }
+      } else {
+        throw new Error("ไม่พบข้อมูล play_list_id และ วันที่เปีย ");
+      }
     } else {
-      throw new Error("ไม่พบข้อมูล play_list_id และ วันที่เปีย ");
+      throw new Error("ไม่พบประเภทวงแชร์");
     }
   } catch (error) {
     console.log(error);
